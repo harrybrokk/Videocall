@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,26 +9,26 @@ const io = new Server(server);
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
-    console.log('User Connected:', socket.id);
+    socket.on('join-room', (data) => {
+        socket.join(data.roomId);
+        socket.nickname = data.nickname;
+        // Baki sabko batana ki naya banda aaya hai
+        socket.to(data.roomId).emit('user-joined', { id: socket.id, nickname: data.nickname });
+    });
 
-    socket.on('join-room', (roomId, userId) => {
-        socket.join(roomId);
-        // Room mein baki logo ko batana ki naya banda aaya hai
-        socket.to(roomId).emit('user-connected', userId);
+    socket.on('signal', (data) => {
+        io.to(data.to).emit('signal', { from: socket.id, signal: data.signal, nickname: data.nickname });
+    });
 
-        socket.on('disconnect', () => {
-            socket.to(roomId).emit('user-disconnected', userId);
-        });
+    // Room dismiss logic
+    socket.on('dismiss-room', (roomId) => {
+        io.to(roomId).emit('room-dismissed');
+    });
 
-        // WebRTC Signaling Forwarding
-        socket.on('signal', (data) => {
-            io.to(data.to).emit('signal', {
-                from: socket.id,
-                signal: data.signal
-            });
-        });
+    socket.on('disconnect', () => {
+        io.emit('user-left', socket.id);
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Leo Connect Live on ${PORT}`));
+server.listen(PORT, () => console.log(`Leo Hub Pro Active`));
