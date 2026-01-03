@@ -1,26 +1,33 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>FUN 2</title>
+    <title>LEO CONNECT - PRO HUB</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/socket.io/socket.io.js"></script>
+
     <style>
-        :root { 
+        :root {
+            --neon: #00f2ff;
             --gold: #facc15;
-            --glass: rgba(255, 255, 255, 0.1); 
-            --bg: #030712; 
+            --glass: rgba(255, 255, 255, 0.1);
+            --bg: #030712;
         }
 
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { 
-            background: var(--bg); 
-            color: #fff; 
-            margin: 0; 
-            overflow-x: hidden; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh; 
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: #fff;
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
         /* GOLDEN SHINY TITLE */
@@ -45,151 +52,151 @@
             margin: 20px 0;
         }
 
-        @keyframes shine { 
-            to { background-position: 200% center; } 
+        @keyframes shine {
+            to { background-position: 200% center; }
         }
 
-        #lobby { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            height: 80vh; 
-            width: 100%; 
+        #lobby {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            width: 100%;
         }
 
-        .glass-card { 
-            background: var(--glass); 
-            backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            padding: 35px; 
-            border-radius: 25px; 
-            text-align: center; 
-            width: 90%; 
-            max-width: 400px; 
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 35px;
+            border-radius: 25px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
         }
 
-        input { 
-            width: 100%; 
-            padding: 14px; 
-            margin: 10px 0; 
-            background: rgba(0,0,0,0.4); 
-            border: 1px solid #1e3a8a; 
-            border-radius: 12px; 
-            color: #fff; 
-            outline: none; 
+        input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #1e3a8a;
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
         }
 
-        /* ONLY YELLOW BORDER GLOW ON FOCUS */
+        /* ONLY YELLOW GLOW ON FOCUS */
         input:focus {
-            border: 1px solid #facc15;
+            border: 1px solid var(--gold);
             box-shadow: 0 0 8px rgba(250, 204, 21, 0.9);
         }
 
-        .btn-join { 
-            width: 100%; 
-            padding: 15px; 
-            margin-top: 20px; 
-            background: #facc15; 
-            color: #000; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            cursor: pointer; 
+        .btn-join {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: var(--neon);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        #call-room { 
-            display: none; 
-            width: 100%; 
-            padding: 15px; 
-            flex-direction: column; 
-            align-items: center; 
+        #call-room {
+            display: none;
+            width: 100%;
+            padding: 15px;
+            flex-direction: column;
+            align-items: center;
         }
 
-        #video-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 15px; 
-            width: 100%; 
-            max-width: 1200px; 
+        #video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 1200px;
         }
 
-        .video-container { 
-            position: relative; 
-            border-radius: 20px; 
-            overflow: hidden; 
-            background: #111; 
-            border: 1px solid var(--glass); 
+        .video-container {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #111;
+            border: 1px solid var(--glass);
             aspect-ratio: 16/9;
             box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
 
-        video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .vid-controls { 
-            position: absolute; 
-            top: 10px; 
-            right: 10px; 
-            display: flex; 
-            gap: 5px; 
+        .vid-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
             z-index: 10;
         }
 
-        .small-btn { 
-            background: rgba(0,0,0,0.6); 
-            color: white; 
-            border: 1px solid #facc15; 
-            padding: 5px 10px; 
-            border-radius: 8px; 
-            font-size: 0.6rem; 
-            cursor: pointer; 
+        .small-btn {
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: 1px solid var(--neon);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            cursor: pointer;
             font-weight: bold;
         }
 
-        .small-btn:active { 
-            background: #facc15; 
-            color: black; 
+        .small-btn:active {
+            background: var(--neon);
+            color: black;
         }
 
-        .name-tag { 
-            position: absolute; 
-            bottom: 10px; 
-            left: 10px; 
-            background: rgba(0,0,0,0.6); 
-            padding: 4px 12px; 
-            border-radius: 8px; 
-            font-size: 0.75rem; 
-            border: 1px solid #facc15; 
+        .name-tag {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            border: 1px solid var(--neon);
         }
 
-        .bottom-controls { 
-            position: fixed; 
-            bottom: 20px; 
-            display: flex; 
-            gap: 15px; 
-            background: rgba(0,0,0,0.7); 
-            padding: 12px 25px; 
+        .bottom-controls {
+            position: fixed;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.7);
+            padding: 12px 25px;
             border-radius: 40px;
-            backdrop-filter: blur(10px); 
-            border: 1px solid #facc15; 
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--neon);
             z-index: 100;
         }
 
-        .main-icon-btn { 
-            background: var(--glass); 
-            border: none; 
-            color: #fff; 
-            width: 50px; 
-            height: 50px; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            font-size: 1.2rem; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
+        .main-icon-btn {
+            background: var(--glass);
+            border: none;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .hidden { display: none !important; }
@@ -198,17 +205,125 @@
 
 <body>
 
-    <div class="shiny-title">FUN 2</div>
+<div class="shiny-title">LEO CONNECT PRO</div>
 
-    <div id="lobby">
-        <div class="glass-card">
-            <input type="text" id="nickname" placeholder="Your Name">
-            <input type="text" id="roomid" placeholder="Room ID">
-            <button class="btn-join" onclick="initCall()">JOIN SESSION</button>
+<div id="lobby">
+    <div class="glass-card">
+        <input type="text" id="nickname" placeholder="Your Name">
+        <input type="text" id="roomid" placeholder="Room ID">
+        <button class="btn-join" onclick="initCall()">JOIN SESSION</button>
+    </div>
+</div>
+
+<div id="call-room">
+    <div id="video-grid">
+        <div class="video-container">
+            <div class="vid-controls">
+                <button class="small-btn" onclick="switchCamera('user')">FRONT</button>
+                <button class="small-btn" onclick="switchCamera('environment')">BACK</button>
+                <button class="small-btn" id="localMicBtn" onclick="toggleMic()" style="background:rgba(0,242,255,0.2)">🎤 ON</button>
+            </div>
+            <video id="localVideo" autoplay playsinline muted></video>
+            <div class="name-tag" id="myTag">You</div>
         </div>
     </div>
 
-    <!-- JS BELOW UNTOUCHED -->
-    <!-- SAME AS YOUR ORIGINAL -->
+    <div class="bottom-controls">
+        <button class="main-icon-btn" style="background:#ef4444;" onclick="location.reload()">📞</button>
+        <button class="main-icon-btn" style="background:#7f1d1d;border:1px solid white;" onclick="dismissAll()">💀</button>
+    </div>
+</div>
+
+<script>
+const socket = io();
+let myStream, pcList = {}, myNickname, myRoom;
+const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+async function initCall() {
+    myNickname = nickname.value;
+    myRoom = roomid.value;
+    if(!myNickname || !myRoom) return alert("Fill details!");
+
+    lobby.classList.add('hidden');
+    call-room.style.display = 'flex';
+    myTag.innerText = myNickname + " (Me)";
+
+    myStream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:"user"}, audio:true });
+    localVideo.srcObject = myStream;
+
+    socket.emit('join-room',{roomId:myRoom,nickname:myNickname});
+    socket.on('user-joined',d=>sendOffer(d.id));
+    socket.on('signal',handleSignal);
+    socket.on('room-dismissed',()=>{alert("Meeting ended");location.reload();});
+    socket.on('user-left',id=>{pcList[id]?.close();document.getElementById(id)?.remove();delete pcList[id];});
+}
+
+async function switchCamera(mode){
+    const muted=!myStream.getAudioTracks()[0].enabled;
+    myStream.getTracks().forEach(t=>t.stop());
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:mode},audio:true});
+    localVideo.srcObject=s;
+    for(let id in pcList){
+        const senders=pcList[id].getSenders();
+        senders.find(x=>x.track?.kind==="video")?.replaceTrack(s.getVideoTracks()[0]);
+        senders.find(x=>x.track?.kind==="audio")?.replaceTrack(s.getAudioTracks()[0]);
+    }
+    s.getAudioTracks()[0].enabled=!muted;
+    myStream=s;
+}
+
+function toggleMic(){
+    const t=myStream.getAudioTracks()[0];
+    t.enabled=!t.enabled;
+    localMicBtn.innerText=t.enabled?'🎤 ON':'🔇 OFF';
+    localMicBtn.style.background=t.enabled?'rgba(0,242,255,0.2)':'#ef4444';
+}
+
+function createPC(id){
+    const pc=new RTCPeerConnection(config);
+    pcList[id]=pc;
+    myStream.getTracks().forEach(t=>pc.addTrack(t,myStream));
+    pc.onicecandidate=e=>e.candidate&&socket.emit('signal',{to:id,signal:{candidate:e.candidate}});
+    pc.ontrack=e=>showRemoteVideo(id,e.streams[0]);
+    return pc;
+}
+
+async function sendOffer(id){
+    const pc=createPC(id);
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('signal',{to:id,signal:{sdp:offer},nickname:myNickname});
+}
+
+async function handleSignal(d){
+    const pc=pcList[d.from]||createPC(d.from);
+    if(d.signal.sdp){
+        await pc.setRemoteDescription(new RTCSessionDescription(d.signal.sdp));
+        if(d.signal.sdp.type==='offer'){
+            const ans=await pc.createAnswer();
+            await pc.setLocalDescription(ans);
+            socket.emit('signal',{to:d.from,signal:{sdp:ans},nickname:myNickname});
+        }
+        d.nickname&&updateNameTag(d.from,d.nickname);
+    } else await pc.addIceCandidate(new RTCIceCandidate(d.signal.candidate));
+}
+
+function showRemoteVideo(id,s){
+    if(document.getElementById(id))return;
+    const d=document.createElement('div');d.className='video-container';d.id=id;
+    const v=document.createElement('video');v.srcObject=s;v.autoplay=true;v.playsInline=true;
+    const t=document.createElement('div');t.className='name-tag';t.innerText='Guest';
+    d.append(v,t);video-grid.appendChild(d);
+}
+
+function updateNameTag(id,n){
+    document.getElementById(id)?.querySelector('.name-tag').innerText=n;
+}
+
+function dismissAll(){
+    if(confirm("End room?")) socket.emit('dismiss-room',myRoom);
+}
+</script>
+
 </body>
 </html>
