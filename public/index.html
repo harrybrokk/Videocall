@@ -1,69 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>LEO CONNECT PRO</title>
+    <title>LEO CONNECT - PRO HUB</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root { 
-            --neon: #ffc400; /* Yellow Neon */
-            --dark: #010409; 
-            --panel: #0a192f;
-            --border: #374151;
-            --main-glow: 0 0 10px rgba(255, 196, 0, 0.5);
-            --red: #ff4444;
-        }
+        :root { --neon: #00f2ff; --glass: rgba(255, 255, 255, 0.1); --bg: #030712; }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--dark); color: #fff; margin: 0; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { background: var(--bg); color: #fff; margin: 0; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
-        /* TITLE FIX */
         .shiny-title {
-            font-size: 1.6rem; font-weight: 900; text-align: center;
-            background: linear-gradient(to right, var(--neon), #fff, var(--neon));
+            font-size: 2.2rem; font-weight: 800; text-align: center;
+            background: linear-gradient(to right, #00f2ff 20%, #fff 40%, #fff 60%, #00f2ff 80%);
             background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent; animation: shine 4s linear infinite;
-            letter-spacing: 3px; margin-top: 15px; z-index: 10;
+            -webkit-text-fill-color: transparent; animation: shine 3s linear infinite;
+            letter-spacing: 2px; margin: 20px 0;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* LOBBY UI FIX */
-        #lobby { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100%; z-index: 10; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 35px; border-radius: 30px; text-align: center; width: 85%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
-        
-        /* INPUT FIX: DARK BACKGROUND, NEON BORDER GLOW */
-        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; color: var(--neon); outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); }
-        .btn-join { width: 100%; padding: 16px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 50px; font-weight: 800; cursor: pointer; box-shadow: var(--main-glow); transition: 0.3s; }
+        #lobby { display: flex; align-items: center; justify-content: center; height: 80vh; width: 100%; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); padding: 35px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.4); border: 1px solid #1e3a8a; border-radius: 12px; color: #fff; outline: none; }
+        .btn-join { width: 100%; padding: 15px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        /* ORIGINAL WORKING CODE CSS (NO CHANGE) */
         #call-room { display: none; width: 100%; padding: 15px; flex-direction: column; align-items: center; }
         #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; width: 100%; max-width: 1200px; }
         
-        .video-container { position: relative; border-radius: 20px; overflow: hidden; background: #111; border: 1px solid rgba(255,255,255,0.1); aspect-ratio: 16/9; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .video-container { 
+            position: relative; border-radius: 20px; overflow: hidden; 
+            background: #111; border: 1px solid var(--glass); aspect-ratio: 16/9;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .vid-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; }
-        .small-btn { background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--neon); padding: 5px 10px; border-radius: 8px; font-size: 0.6rem; cursor: pointer; font-weight: bold; }
+      /* Floating Controls on Video */
+        .vid-controls { 
+            position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;
+        }
+        .small-btn { 
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--neon); 
+            padding: 5px 10px; border-radius: 8px; font-size: 0.6rem; cursor: pointer; font-weight: bold;
+        }
         .small-btn:active { background: var(--neon); color: black; }
+        
         .name-tag { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; border: 1px solid var(--neon); }
 
-        .bottom-controls { position: fixed; bottom: 20px; display: flex; gap: 15px; background: rgba(0,0,0,0.7); padding: 12px 25px; border-radius: 40px; backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100; }
-        .main-icon-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .main-icon-btn.red { background: #ff4444; color: white; border: none; }
+        .bottom-controls { 
+            position: fixed; bottom: 20px; display: flex; gap: 15px; 
+            background: rgba(0,0,0,0.7); padding: 12px 25px; border-radius: 40px;
+            backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
+        }
+        .main-icon-btn { background: var(--glass); border: none; color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
         
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="background"><div class="grid-lines"></div></div>
-    <div class="shiny-title">FUN 2</div>
+    <div class="shiny-title">LEO CONNECT PRO</div>
 
     <div id="lobby">
         <div class="glass-card">
-            <h3 style="margin:0 0 20px 0; font-weight:400; font-size: 0.9rem; letter-spacing:1px;">HUB ACCESS</h3>
-            <input type="text" id="nickname" placeholder="Commander Name">
-            <input type="text" id="roomid" placeholder="Secure Room ID">
-            <button class="btn-join" onclick="initCall()">AUTHORIZE & JOIN</button>
+            <input type="text" id="nickname" placeholder="Your Name">
+            <input type="text" id="roomid" placeholder="Room ID">
+            <button class="btn-join" onclick="initCall()">JOIN SESSION</button>
         </div>
     </div>
 <div id="call-room">
@@ -82,7 +81,7 @@
 
         <div class="bottom-controls">
             <button class="main-icon-btn" style="background: #ef4444;" onclick="location.reload()" title="Leave">📞</button>
-            <button class="main-icon-btn red" onclick="dismissAll()" title="End All">📞</button> <!-- Final Fix: Normal Call Icon for Dismiss All -->
+            <button class="main-icon-btn" style="background: #7f1d1d; border: 1px solid white;" onclick="dismissAll()" title="End All">💀</button>
         </div>
     </div>
 
@@ -110,14 +109,26 @@
             socket.on('user-left', (id) => { if(pcList[id]) { pcList[id].close(); document.getElementById(id)?.remove(); delete pcList[id]; } });
         }
 
-        // --- CAMERA SWITCH LOGIC ---
+        // --- DEDICATED CAMERA SWITCH LOGIC ---
         async function switchCamera(mode) {
+            // 1. Save current mute state
             const isMuted = !myStream.getAudioTracks()[0].enabled;
+
+            // 2. STOP EVERYTHING (Release Hardware)
             myStream.getTracks().forEach(track => track.stop());
+            console.log("Hardware Released...");
 
             try {
-                const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
+                // 3. Request New Mode
+                const newStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: mode }, 
+                    audio: true 
+                });
+
+                // 4. Update Local UI
                 document.getElementById('localVideo').srcObject = newStream;
+
+                // 5. Replace Tracks for all Peers
                 const newVT = newStream.getVideoTracks()[0];
                 const newAT = newStream.getAudioTracks()[0];
 
@@ -129,8 +140,10 @@
                     if(aSender) await aSender.replaceTrack(newAT);
                 }
 
+                // 6. Apply previous mute state to new stream
                 newStream.getAudioTracks()[0].enabled = !isMuted;
                 myStream = newStream;
+                console.log("Switched to " + mode + " camera");
               } catch (err) {
                 alert("Conflict: Camera source is busy. Please try again in 2 seconds.");
                 location.reload();
@@ -142,7 +155,7 @@
             audioTrack.enabled = !audioTrack.enabled;
             const btn = document.getElementById('localMicBtn');
             btn.innerText = audioTrack.enabled ? '🎤 ON' : '🔇 OFF';
-            btn.style.background = audioTrack.enabled ? 'rgba(0,242,255,0.2)' : '#ff4444';
+            btn.style.background = audioTrack.enabled ? 'rgba(0,242,255,0.2)' : '#ef4444';
         }
 
         // --- WebRTC Core ---
@@ -193,4 +206,3 @@
     </script>
 </body>
 </html>
-
