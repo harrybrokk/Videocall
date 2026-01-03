@@ -1,336 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>LEO CONNECT PRO</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="/socket.io/socket.io.js"></script>
+    <title>LEO CONNECT - PRO HUB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root { --neon: #00f2ff; --glass: rgba(255, 255, 255, 0.1); --bg: #030712; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
-<style>
-:root{
-  --neon:#00f2ff;
-  --bg:#020617;
-  --glass:rgba(255,255,255,0.12);
-}
-*{box-sizing:border-box;font-family:system-ui,sans-serif}
-body{
-  margin:0;
-  background:radial-gradient(circle at top,#020617,#000);
-  color:#fff;
-  min-height:100vh;
-}
+        .shiny-title {
+            font-size: 2.2rem; font-weight: 800; text-align: center;
+            background: linear-gradient(to right, #00f2ff 20%, #fff 40%, #fff 60%, #00f2ff 80%);
+            background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; animation: shine 3s linear infinite;
+            letter-spacing: 2px; margin: 20px 0;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
 
-/* ---------- LOGIN (IMAGE STYLE) ---------- */
-#lobby{
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-.login-card{
-  width:90%;
-  max-width:360px;
-  padding:30px;
-  border-radius:26px;
-  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.05));
-  backdrop-filter:blur(18px);
-  border:1px solid rgba(255,255,255,.2);
-}
-.login-card h1{
-  text-align:center;
-  margin-bottom:20px;
-  font-size:1.8rem;
-  background:linear-gradient(90deg,var(--neon),#fff,var(--neon));
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-input{
-  width:100%;
-  padding:14px;
-  margin-bottom:12px;
-  border-radius:14px;
-  border:1px solid #1e3a8a;
-  background:#0007;
-  color:#fff;
-}
-.join{
-  width:100%;
-  padding:14px;
-  border-radius:16px;
-  background:var(--neon);
-  color:#000;
-  font-weight:bold;
-  border:none;
-}
+        #lobby { display: flex; align-items: center; justify-content: center; height: 80vh; width: 100%; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); padding: 35px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.4); border: 1px solid #1e3a8a; border-radius: 12px; color: #fff; outline: none; }
+        .btn-join { width: 100%; padding: 15px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-/* ---------- CALL ---------- */
-#call{
-  display:none;
-  position:relative;
-  height:100vh;
-  overflow:hidden;
-}
+        #call-room { display: none; width: 100%; padding: 15px; flex-direction: column; align-items: center; }
+        #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; width: 100%; max-width: 1200px; }
+        
+        .video-container { 
+            position: relative; border-radius: 20px; overflow: hidden; 
+            background: #111; border: 1px solid var(--glass); aspect-ratio: 16/9;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+      /* Floating Controls on Video */
+        .vid-controls { 
+            position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;
+        }
+        .small-btn { 
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--neon); 
+            padding: 5px 10px; border-radius: 8px; font-size: 0.6rem; cursor: pointer; font-weight: bold;
+        }
+        .small-btn:active { background: var(--neon); color: black; }
+        
+        .name-tag { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; border: 1px solid var(--neon); }
 
-/* MAIN VIDEO (CENTER GLASS CARD) */
-#main-video{
-  position:absolute;
-  inset:60px 20px 140px 20px;
-  border-radius:28px;
-  overflow:hidden;
-  background:#000;
-  box-shadow:0 30px 80px #000;
-}
-#main-video video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* FLOATING BUBBLES */
-#bubbles{
-  position:absolute;
-  bottom:120px;
-  left:0;
-  right:0;
-  display:flex;
-  justify-content:center;
-  gap:14px;
-}
-.bubble{
-  width:76px;
-  height:76px;
-  border-radius:50%;
-  overflow:hidden;
-  background:#000;
-  border:2px solid rgba(255,255,255,.4);
-}
-.bubble video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* NAME TAG */
-.name{
-  position:absolute;
-  bottom:10px;
-  left:10px;
-  padding:4px 10px;
-  border-radius:10px;
-  background:#0008;
-  font-size:.75rem;
-}
-
-/* BOTTOM BAR (IMAGE STYLE) */
-.controls{
-  position:absolute;
-  bottom:24px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:16px;
-  padding:14px 26px;
-  border-radius:50px;
-  background:#000c;
-  backdrop-filter:blur(14px);
-}
-.ctrl{
-  width:52px;
-  height:52px;
-  border-radius:50%;
-  background:var(--glass);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:1.3rem;
-  border:none;
-  color:#fff;
-}
-.end{background:#ef4444}
-
-/* CHAT (IMAGE STYLE) */
-#chat{
-  position:absolute;
-  top:0;
-  right:0;
-  width:85%;
-  max-width:340px;
-  height:100%;
-  background:#020617f0;
-  backdrop-filter:blur(16px);
-  transform:translateX(100%);
-  transition:.35s;
-  display:flex;
-  flex-direction:column;
-}
-#chat.show{transform:translateX(0)}
-.chat-head{
-  padding:16px;
-  display:flex;
-  justify-content:space-between;
-  border-bottom:1px solid #ffffff22;
-}
-.chat-body{
-  flex:1;
-  padding:14px;
-  overflow:auto;
-}
-.msg{
-  padding:8px 12px;
-  border-radius:12px;
-  margin-bottom:10px;
-  max-width:80%;
-}
-.other{background:#ffffff22}
-.me{background:var(--neon);color:#000;margin-left:auto}
-.chat-input{
-  display:flex;
-  gap:8px;
-  padding:12px;
-  border-top:1px solid #ffffff22;
-}
-.chat-input input{flex:1}
-.chat-input button{background:#555;color:#999;border:none;border-radius:8px}
-</style>
+        .bottom-controls { 
+            position: fixed; bottom: 20px; display: flex; gap: 15px; 
+            background: rgba(0,0,0,0.7); padding: 12px 25px; border-radius: 40px;
+            backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
+        }
+        .main-icon-btn { background: var(--glass); border: none; color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        
+        .hidden { display: none !important; }
+    </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="lobby">
-  <div class="login-card">
-    <h1>LEO CONNECT</h1>
-    <input id="name" placeholder="Your Name">
-    <input id="room" placeholder="Room ID">
-    <button class="join" onclick="start()">JOIN SESSION</button>
-  </div>
-</div>
+    <div class="shiny-title">LEO CONNECT PRO</div>
 
-<!-- CALL -->
-<div id="call">
-  <div id="main-video"></div>
-  <div id="bubbles"></div>
-
-  <div class="controls">
-    <button class="ctrl" onclick="toggleMic()">🎤</button>
-    <button class="ctrl" onclick="switchCam()">🔄</button>
-    <button class="ctrl" onclick="toggleChat()">💬</button>
-    <button class="ctrl end" onclick="location.reload()">📞</button>
-  </div>
-
-  <!-- CHAT -->
-  <div id="chat">
-    <div class="chat-head">
-      <span>Chat</span>
-      <button onclick="toggleChat()">✕</button>
+    <div id="lobby">
+        <div class="glass-card">
+            <input type="text" id="nickname" placeholder="Your Name">
+            <input type="text" id="roomid" placeholder="Room ID">
+            <button class="btn-join" onclick="initCall()">JOIN SESSION</button>
+        </div>
     </div>
-    <div class="chat-body">
-      <div class="msg other">Jake: Can you hear me?</div>
-      <div class="msg me">You: Yes 👍</div>
+<div id="call-room">
+        <div id="video-grid">
+            <!-- LOCAL USER BOX -->
+            <div class="video-container">
+                <div class="vid-controls">
+                    <button class="small-btn" onclick="switchCamera('user')">FRONT</button>
+                    <button class="small-btn" onclick="switchCamera('environment')">BACK</button>
+                    <button class="small-btn" id="localMicBtn" onclick="toggleMic()" style="background:rgba(0,242,255,0.2)">🎤 ON</button>
+                </div>
+                <video id="localVideo" autoplay playsinline muted></video>
+                <div class="name-tag" id="myTag">You</div>
+            </div>
+        </div>
+
+        <div class="bottom-controls">
+            <button class="main-icon-btn" style="background: #ef4444;" onclick="location.reload()" title="Leave">📞</button>
+            <button class="main-icon-btn" style="background: #7f1d1d; border: 1px solid white;" onclick="dismissAll()" title="End All">💀</button>
+        </div>
     </div>
-    <div class="chat-input">
-      <input disabled placeholder="Message...">
-      <button disabled>Send</button>
-    </div>
-  </div>
-</div>
 
-<script>
-const socket=io();
-let localStream,peers={},roomId,myName,facing="user";
-const config={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
+    <script>
+        const socket = io();
+        let myStream, pcList = {}, myNickname, myRoom;
+        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-async function start(){
-  myName=name.value;
-  roomId=room.value;
-  if(!myName||!roomId)return alert("Fill details");
-  lobby.style.display="none";
-  call.style.display="block";
+        async function initCall() {
+            myNickname = document.getElementById('nickname').value;
+            myRoom = document.getElementById('roomid').value;
+            if(!myNickname || !myRoom) return alert("Fill details!");
 
-  localStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:true});
-  setMain("me",localStream,myName+" (You)",true);
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('call-room').style.display = 'flex';
+            document.getElementById('myTag').innerText = myNickname + " (Me)";
 
-  socket.emit("join-room",{roomId,nickname:myName});
-  socket.on("user-joined",d=>offer(d.id));
-  socket.on("signal",handleSignal);
-  socket.on("user-left",id=>remove(id));
-}
+            // Start with Front Camera
+            myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+            document.getElementById('localVideo').srcObject = myStream;
+          socket.emit('join-room', { roomId: myRoom, nickname: myNickname });
+            socket.on('user-joined', (data) => sendOffer(data.id));
+            socket.on('signal', (data) => handleSignal(data));
+            socket.on('room-dismissed', () => { alert("Meeting ended."); location.reload(); });
+            socket.on('user-left', (id) => { if(pcList[id]) { pcList[id].close(); document.getElementById(id)?.remove(); delete pcList[id]; } });
+        }
 
-function setMain(id,stream,label,muted){
-  main-video.innerHTML="";
-  const v=document.createElement("video");
-  v.srcObject=stream;v.autoplay=true;v.playsInline=true;
-  if(muted)v.muted=true;
-  const n=document.createElement("div");
-  n.className="name";n.innerText=label;
-  main-video.append(v,n);
-}
+        // --- DEDICATED CAMERA SWITCH LOGIC ---
+        async function switchCamera(mode) {
+            // 1. Save current mute state
+            const isMuted = !myStream.getAudioTracks()[0].enabled;
 
-function addBubble(id,stream){
-  if(document.getElementById("b-"+id))return;
-  const b=document.createElement("div");
-  b.className="bubble";b.id="b-"+id;
-  const v=document.createElement("video");
-  v.srcObject=stream;v.autoplay=true;v.playsInline=true;
-  b.append(v);
-  b.onclick=()=>setMain(id,stream,"Guest");
-  bubbles.append(b);
-}
+            // 2. STOP EVERYTHING (Release Hardware)
+            myStream.getTracks().forEach(track => track.stop());
+            console.log("Hardware Released...");
 
-function remove(id){
-  peers[id]?.close();
-  document.getElementById("b-"+id)?.remove();
-  delete peers[id];
-}
+            try {
+                // 3. Request New Mode
+                const newStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: mode }, 
+                    audio: true 
+                });
 
-function createPC(id){
-  const pc=new RTCPeerConnection(config);
-  peers[id]=pc;
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-  pc.onicecandidate=e=>e.candidate&&socket.emit("signal",{to:id,signal:{candidate:e.candidate}});
-  pc.ontrack=e=>addBubble(id,e.streams[0]);
-  return pc;
-}
+                // 4. Update Local UI
+                document.getElementById('localVideo').srcObject = newStream;
 
-async function offer(id){
-  const pc=createPC(id);
-  const o=await pc.createOffer();
-  await pc.setLocalDescription(o);
-  socket.emit("signal",{to:id,signal:{sdp:o}});
-}
+                // 5. Replace Tracks for all Peers
+                const newVT = newStream.getVideoTracks()[0];
+                const newAT = newStream.getAudioTracks()[0];
 
-async function handleSignal(d){
-  let pc=peers[d.from]||createPC(d.from);
-  if(d.signal.sdp){
-    await pc.setRemoteDescription(new RTCSessionDescription(d.signal.sdp));
-    if(d.signal.sdp.type==="offer"){
-      const a=await pc.createAnswer();
-      await pc.setLocalDescription(a);
-      socket.emit("signal",{to:d.from,signal:{sdp:a}});
-    }
-  }else if(d.signal.candidate){
-    await pc.addIceCandidate(new RTCIceCandidate(d.signal.candidate));
-  }
-}
+                for(let id in pcList) {
+                    const senders = pcList[id].getSenders();
+                    const vSender = senders.find(s => s.track && s.track.kind === 'video');
+                    const aSender = senders.find(s => s.track && s.track.kind === 'audio');
+                    if(vSender) await vSender.replaceTrack(newVT);
+                    if(aSender) await aSender.replaceTrack(newAT);
+                }
 
-function toggleMic(){
-  const t=localStream.getAudioTracks()[0];
-  t.enabled=!t.enabled;
-}
+                // 6. Apply previous mute state to new stream
+                newStream.getAudioTracks()[0].enabled = !isMuted;
+                myStream = newStream;
+                console.log("Switched to " + mode + " camera");
+              } catch (err) {
+                alert("Conflict: Camera source is busy. Please try again in 2 seconds.");
+                location.reload();
+            }
+        }
 
-async function switchCam(){
-  facing=facing==="user"?"environment":"user";
-  localStream.getTracks().forEach(t=>t.stop());
-  localStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:true});
-  main-video.querySelector("video").srcObject=localStream;
-  for(const id in peers){
-    const s=peers[id].getSenders().find(x=>x.track.kind==="video");
-    s&&s.replaceTrack(localStream.getVideoTracks()[0]);
-  }
-}
+        function toggleMic() {
+            const audioTrack = myStream.getAudioTracks()[0];
+            audioTrack.enabled = !audioTrack.enabled;
+            const btn = document.getElementById('localMicBtn');
+            btn.innerText = audioTrack.enabled ? '🎤 ON' : '🔇 OFF';
+            btn.style.background = audioTrack.enabled ? 'rgba(0,242,255,0.2)' : '#ef4444';
+        }
 
-function toggleChat(){chat.classList.toggle("show")}
-</script>
+        // --- WebRTC Core ---
+        function createPC(toId) {
+            const pc = new RTCPeerConnection(config);
+            pcList[toId] = pc;
+            myStream.getTracks().forEach(track => pc.addTrack(track, myStream));
+            pc.onicecandidate = (e) => { if(e.candidate) socket.emit('signal', { to: toId, signal: { candidate: e.candidate } }); };
+            pc.ontrack = (e) => showRemoteVideo(toId, e.streams[0]);
+            return pc;
+        }
 
+        async function sendOffer(toId) {
+            const pc = createPC(toId);
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('signal', { to: toId, signal: { sdp: offer }, nickname: myNickname });
+        }
+
+        async function handleSignal(data) {
+            let pc = pcList[data.from] || createPC(data.from);
+            if(data.signal.sdp) {
+                await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+                if(data.signal.sdp.type === 'offer') {
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('signal', { to: data.from, signal: { sdp: answer }, nickname: myNickname });
+                }
+                if(data.nickname) updateNameTag(data.from, data.nickname);
+            } else if(data.signal.candidate) {
+                await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+            }
+        }
+      function showRemoteVideo(id, stream) {
+            if(document.getElementById(id)) return;
+            const div = document.createElement('div'); div.className = 'video-container'; div.id = id;
+            const v = document.createElement('video'); v.srcObject = stream; v.autoplay = true; v.playsInline = true;
+            const tag = document.createElement('div'); tag.className = 'name-tag'; tag.innerText = "Guest";
+            div.append(v, tag); document.getElementById('video-grid').appendChild(div);
+        }
+
+        function updateNameTag(id, name) {
+            const container = document.getElementById(id);
+            if(container) { const tag = container.querySelector('.name-tag'); if(tag) tag.innerText = name; }
+        }
+
+        function dismissAll() { if(confirm("End room?")) socket.emit('dismiss-room', myRoom); }
+    </script>
 </body>
 </html>
