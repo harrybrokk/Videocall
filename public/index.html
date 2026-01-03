@@ -1,179 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>FUN 2 - STABLE HUB</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LEO CONNECT - PRO HUB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root { 
-            --neon: #ffc400; /* Yellow Neon */
-            --dark: #010409; 
-            --panel: #0a192f;
-            --border: #374151;
-            --main-glow: 0 0 10px rgba(255, 196, 0, 0.5);
-            --red: #ff4444;
-        }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background: var(--dark); color: #fff; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        :root { --neon: #00f2ff; --glass: rgba(255, 255, 255, 0.1); --bg: #030712; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
-        /* HOLOGRID BACKGROUND & TITLE */
-        .background { position: fixed; inset: 0; background: radial-gradient(circle at center, #0f172a 0%, #010409 100%); z-index: -1; }
-        .grid-lines { position: absolute; width: 200%; height: 200%; background-image: linear-gradient(rgba(255,196,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,196,0,0.15) 1px, transparent 1px); background-size: 50px 50px; transform: perspective(500px) rotateX(60deg); top: -50%; left: -50%; animation: moveGrid 15s linear infinite; opacity: 0.25; }
-        @keyframes moveGrid { from { transform: perspective(500px) rotateX(60deg) translateY(0); } to { transform: perspective(500px) rotateX(60deg) translateY(50px); } }
-        .shiny-title { font-size: 1.6rem; font-weight: 900; text-align: center; background: linear-gradient(to right, var(--neon), #fff, var(--neon)); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 4s linear infinite; letter-spacing: 3px; margin-top: 15px; z-index: 10; }
+        .shiny-title {
+            font-size: 2.2rem; font-weight: 800; text-align: center;
+            background: linear-gradient(to right, #00f2ff 20%, #fff 40%, #fff 60%, #00f2ff 80%);
+            background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; animation: shine 3s linear infinite;
+            letter-spacing: 2px; margin: 20px 0;
+        }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* LOBBY UI FIX */
-        #lobby { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; z-index: 10; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 35px; border-radius: 30px; text-align: center; width: 85%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
-        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; color: var(--neon); outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); } /* Input Focus Fix */
-        .btn-join { width: 100%; padding: 16px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 50px; font-weight: 800; cursor: pointer; box-shadow: var(--main-glow); transition: 0.3s; }
+        #lobby { display: flex; align-items: center; justify-content: center; height: 80vh; width: 100%; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); padding: 35px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.4); border: 1px solid #1e3a8a; border-radius: 12px; color: #fff; outline: none; }
+        .btn-join { width: 100%; padding: 15px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        /* ADAPTIVE FLEXBOX GRID - SIMPLE & STABLE */
-        #call-room { display: none; width: 100%; height: 100%; padding: 10px; flex-direction: column; align-items: center; z-index: 5; }
-        #video-grid { 
-            display: flex; flex-wrap: wrap; /* Flexible wrap for multiple users */
-            justify-content: center; align-content: center;
-            width: 100%; 
-            height: calc(100vh - 100px); /* CONTROLS KE JUST UPAR TAK FIX */
-            gap: 10px; 
-            transition: all 0.4s ease;
-            margin-top: 5px;
-        }
+        #call-room { display: none; width: 100%; padding: 15px; flex-direction: column; align-items: center; }
+        #video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; width: 100%; max-width: 1200px; }
         
         .video-container { 
-            position: relative; border-radius: 10px; overflow: hidden; 
-            background: #111; border: 2px solid var(--border);
-            box-shadow: 0 0 5px rgba(255, 196, 0, 0.1); transition: 0.4s ease;
-            flex-grow: 1; /* Grow to fill space */
-            min-width: 45%; /* Minimum Ludo style width */
-            max-width: 100%; /* Default max width */
-            height: 100%; /* Default height for single user */
+            position: relative; border-radius: 20px; overflow: hidden; 
+            background: #111; border: 1px solid var(--glass); aspect-ratio: 16/9;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
-        .video-container.main-user { border-color: var(--neon); box-shadow: var(--main-glow); }
-        
         video { width: 100%; height: 100%; object-fit: cover; }
+      /* Floating Controls on Video */
+        .vid-controls { 
+            position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10;
+        }
+        .small-btn { 
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--neon); 
+            padding: 5px 10px; border-radius: 8px; font-size: 0.6rem; cursor: pointer; font-weight: bold;
+        }
+        .small-btn:active { background: var(--neon); color: black; }
         
-        /* FLOATING CONTROLS */
-        .vid-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
-        .vid-controls.show { opacity: 1; pointer-events: auto; }
-        .small-btn { background: rgba(0, 0, 0, 0.5); color: var(--neon); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 5px; font-size: 0.6rem; font-weight: bold; cursor: pointer; transition: 0.1s; }
-        .small-btn:active { background: var(--neon); color: var(--dark); border-color: var(--neon); } /* Click Feedback Fix */
-
-        .name-tag { position: absolute; bottom: 8px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 2px 10px; border-radius: 10px; font-size: 0.65rem; border: 1px solid var(--neon); color: #fff; z-index: 10; }
+        .name-tag { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; border: 1px solid var(--neon); }
 
         .bottom-controls { 
-            position: fixed; bottom: 15px; display: flex; gap: 15px; 
-            background: rgba(10, 25, 47, 0.8); padding: 10px 20px; border-radius: 40px;
-            backdrop-filter: blur(15px); border: 1px solid var(--neon); 
+            position: fixed; bottom: 20px; display: flex; gap: 15px; 
+            background: rgba(0,0,0,0.7); padding: 12px 25px; border-radius: 40px;
+            backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
         }
-        .btn-orb { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-orb:active { transform: scale(0.9); border-color: var(--neon); }
-        .btn-orb.red { background: rgba(239, 68, 68, 0.15); border-color: var(--red); color: var(--red); }
-
+        .main-icon-btn { background: var(--glass); border: none; color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="background"><div class="grid-lines"></div></div>
-    <div class="shiny-title">FUN 2</div>
+    <div class="shiny-title">LEO CONNECT PRO</div>
 
     <div id="lobby">
         <div class="glass-card">
-            <h3 style="margin:0 0 20px 0; font-weight:400; font-size: 0.9rem; letter-spacing:1px;">HUB ACCESS</h3>
-            <input type="text" id="nickname" placeholder="Commander Name">
-            <input type="text" id="roomid" placeholder="Secure Room ID">
-            <button class="btn-join" onclick="initCall()">AUTHORIZE & JOIN</button>
+            <input type="text" id="nickname" placeholder="Your Name">
+            <input type="text" id="roomid" placeholder="Room ID">
+            <button class="btn-join" onclick="initCall()">JOIN SESSION</button>
         </div>
     </div>
-
-    <div id="call-room">
+<div id="call-room">
         <div id="video-grid">
-            <!-- Videos go here -->
+            <!-- LOCAL USER BOX -->
+            <div class="video-container">
+                <div class="vid-controls">
+                    <button class="small-btn" onclick="switchCamera('user')">FRONT</button>
+                    <button class="small-btn" onclick="switchCamera('environment')">BACK</button>
+                    <button class="small-btn" id="localMicBtn" onclick="toggleMic()" style="background:rgba(0,242,255,0.2)">🎤 ON</button>
+                </div>
+                <video id="localVideo" autoplay playsinline muted></video>
+                <div class="name-tag" id="myTag">You</div>
+            </div>
         </div>
 
         <div class="bottom-controls">
-            <button class="btn-orb" id="micBtn" onclick="toggleMic()">🎤</button>
-            <button class="btn-orb" onclick="location.reload()">📞</button>
-            <button class="btn-orb red" onclick="dismissAll()" title="End Session">🚫</button>
+            <button class="main-icon-btn" style="background: #ef4444;" onclick="location.reload()" title="Leave">📞</button>
+            <button class="main-icon-btn" style="background: #7f1d1d; border: 1px solid white;" onclick="dismissAll()" title="End All">💀</button>
         </div>
     </div>
 
     <script>
         const socket = io();
-        const videoGrid = document.getElementById('video-grid');
         let myStream, pcList = {}, myNickname, myRoom;
         const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        let controlTimeout;
 
         async function initCall() {
             myNickname = document.getElementById('nickname').value;
             myRoom = document.getElementById('roomid').value;
-            if(!myNickname || !myRoom) return alert("Fill Authorization!");
+            if(!myNickname || !myRoom) return alert("Fill details!");
 
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('call-room').style.display = 'flex';
+            document.getElementById('myTag').innerText = myNickname + " (Me)";
 
+            // Start with Front Camera
             myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-            
-            addVideoToGrid('local', myStream, myNickname + ' (You)', true);
-
-            socket.emit('join-room', { roomId: myRoom, nickname: myNickname });
+            document.getElementById('localVideo').srcObject = myStream;
+          socket.emit('join-room', { roomId: myRoom, nickname: myNickname });
             socket.on('user-joined', (data) => sendOffer(data.id));
             socket.on('signal', (data) => handleSignal(data));
-            socket.on('room-dismissed', () => { alert("Hub Closed"); location.reload(); });
-            socket.on('user-left', (id) => { 
-                if(pcList[id]) { 
-                    pcList[id].close(); 
-                    document.getElementById(id)?.remove(); 
-                    delete pcList[id];
-                } 
-            });
-        }
-        
-        function addVideoToGrid(id, stream, name, isLocal) {
-            const container = document.createElement('div');
-            container.className = 'video-container';
-            container.id = id;
-            container.onclick = function() { toggleOrbControls(this); };
-
-            let controlsHTML = '';
-            if (isLocal) {
-                controlsHTML = `
-                    <div class="vid-controls">
-                        <button class="small-btn" onclick="switchCamera('user')">FRONT CAM</button>
-                        <button class="small-btn" onclick="switchCamera('environment')">BACK CAM</button>
-                    </div>
-                `;
-                container.classList.add('main-user');
-            }
-
-            container.innerHTML = `${controlsHTML}<video id="${id}Video" autoplay playsInline ${isLocal ? 'muted' : ''}></video><div class="name-tag">${name}</div>`;
-            container.querySelector('video').srcObject = stream;
-            videoGrid.appendChild(container);
+            socket.on('room-dismissed', () => { alert("Meeting ended."); location.reload(); });
+            socket.on('user-left', (id) => { if(pcList[id]) { pcList[id].close(); document.getElementById(id)?.remove(); delete pcList[id]; } });
         }
 
-        function toggleOrbControls(el) {
-            const controls = el.querySelector('.vid-controls');
-            if (!controls) return;
-            if (controlTimeout) clearTimeout(controlTimeout);
-            controls.classList.add('show');
-            controlTimeout = setTimeout(() => { controls.classList.remove('show'); }, 3000);
-        }
-
+        // --- DEDICATED CAMERA SWITCH LOGIC ---
         async function switchCamera(mode) {
-            if(myStream) myStream.getTracks().forEach(t => t.stop());
-            
+            // 1. Save current mute state
+            const isMuted = !myStream.getAudioTracks()[0].enabled;
+
+            // 2. STOP EVERYTHING (Release Hardware)
+            myStream.getTracks().forEach(track => track.stop());
+            console.log("Hardware Released...");
+
             try {
-                const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
+                // 3. Request New Mode
+                const newStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: mode }, 
+                    audio: true 
+                });
+
+                // 4. Update Local UI
+                document.getElementById('localVideo').srcObject = newStream;
+
+                // 5. Replace Tracks for all Peers
                 const newVT = newStream.getVideoTracks()[0];
                 const newAT = newStream.getAudioTracks()[0];
-                const isMuted = !myStream.getAudioTracks()[0].enabled;
-                
-                document.getElementById('localVideo').srcObject = newStream;
 
                 for(let id in pcList) {
                     const senders = pcList[id].getSenders();
@@ -183,25 +140,31 @@
                     if(aSender) await aSender.replaceTrack(newAT);
                 }
 
+                // 6. Apply previous mute state to new stream
                 newStream.getAudioTracks()[0].enabled = !isMuted;
                 myStream = newStream;
-            } catch(e) { alert("Camera Busy"); }
+                console.log("Switched to " + mode + " camera");
+              } catch (err) {
+                alert("Conflict: Camera source is busy. Please try again in 2 seconds.");
+                location.reload();
+            }
         }
 
         function toggleMic() {
-            const at = myStream.getAudioTracks()[0];
-            at.enabled = !at.enabled;
-            const btn = document.getElementById('micBtn');
-            btn.innerText = at.enabled ? '🎤' : '🔇';
-            btn.style.color = at.enabled ? '' : '#ff4444';
+            const audioTrack = myStream.getAudioTracks()[0];
+            audioTrack.enabled = !audioTrack.enabled;
+            const btn = document.getElementById('localMicBtn');
+            btn.innerText = audioTrack.enabled ? '🎤 ON' : '🔇 OFF';
+            btn.style.background = audioTrack.enabled ? 'rgba(0,242,255,0.2)' : '#ef4444';
         }
 
+        // --- WebRTC Core ---
         function createPC(toId) {
             const pc = new RTCPeerConnection(config);
             pcList[toId] = pc;
             myStream.getTracks().forEach(track => pc.addTrack(track, myStream));
             pc.onicecandidate = (e) => { if(e.candidate) socket.emit('signal', { to: toId, signal: { candidate: e.candidate } }); };
-            pc.ontrack = (e) => addVideoToGrid(toId, e.streams[0], "Guest", false);
+            pc.ontrack = (e) => showRemoteVideo(toId, e.streams[0]);
             return pc;
         }
 
@@ -222,15 +185,24 @@
                     socket.emit('signal', { to: data.from, signal: { sdp: answer }, nickname: myNickname });
                 }
                 if(data.nickname) updateNameTag(data.from, data.nickname);
-            } else if(data.signal.candidate) pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+            } else if(data.signal.candidate) {
+                await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+            }
+        }
+      function showRemoteVideo(id, stream) {
+            if(document.getElementById(id)) return;
+            const div = document.createElement('div'); div.className = 'video-container'; div.id = id;
+            const v = document.createElement('video'); v.srcObject = stream; v.autoplay = true; v.playsInline = true;
+            const tag = document.createElement('div'); tag.className = 'name-tag'; tag.innerText = "Guest";
+            div.append(v, tag); document.getElementById('video-grid').appendChild(div);
         }
 
         function updateNameTag(id, name) {
             const container = document.getElementById(id);
-            if(container) container.querySelector('.name-tag').innerText = name;
+            if(container) { const tag = container.querySelector('.name-tag'); if(tag) tag.innerText = name; }
         }
 
-        function dismissAll() { if(confirm("Terminate Hub?")) socket.emit('dismiss-room', myRoom); }
+        function dismissAll() { if(confirm("End room?")) socket.emit('dismiss-room', myRoom); }
     </script>
 </body>
 </html>
