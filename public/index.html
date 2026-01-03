@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>LEO CONNECT - 3D VIDEO HUB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root { --neon: #00f2ff; --glass: rgba(255, 255, 255, 0.1); --bg: #030712; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+        /* Background Animation */
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1e293b 0%, #030712 100%); z-index: -1; }
+
+        /* Lobby UI (3D Card) */
+        #lobby { perspective: 1000px; display: flex; align-items: center; justify-content: center; height: 100vh; width: 100%; }
+        .glass-card { 
+            background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1);
+            padding: 40px; border-radius: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center; width: 90%; max-width: 400px;
+            transform-style: preserve-3d; transition: 0.5s;
+        }
+        .glass-card:hover { transform: rotateY(5deg) rotateX(5deg); box-shadow: 0 30px 60px rgba(0, 242, 255, 0.2); }
+        h1 { color: var(--neon); text-shadow: 0 0 10px var(--neon); margin-bottom: 30px; letter-spacing: 2px; }
+        input { 
+            width: 100%; padding: 15px; margin: 10px 0; background: rgba(0,0,0,0.3); border: 1px solid var(--neon);
+            border-radius: 12px; color: #fff; outline: none; font-size: 1rem;
+        }
+        .btn-join { 
+            width: 100%; padding: 15px; margin-top: 20px; background: var(--neon); color: #000;
+            border: none; border-radius: 12px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 0 15px var(--neon); transition: 0.3s;
+        }
+        .btn-join:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--neon); }
+
+        /* Video Grid Area */
+        #call-room { display: none; width: 100%; padding: 20px; flex-direction: column; align-items: center; }
+        #video-grid { 
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; width: 100%; max-width: 1200px; margin-top: 20px;
+        }
+        .video-container { 
+            position: relative; border-radius: 20px; overflow: hidden; 
+            background: #000; border: 2px solid var(--glass);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            aspect-ratio: 16/9;
+        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .user-label { position: absolute; bottom: 10px; left: 15px; background: rgba(0,0,0,0.5); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--neon); }
+
+        /* Floating Controls */
+        .controls { 
+            position: fixed; bottom: 30px; display: flex; gap: 20px; 
+            background: rgba(0,0,0,0.6); padding: 15px 30px; border-radius: 50px;
+            backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
+        }
+        .icon-btn { 
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.2); 
+            color: #fff; width: 50px; height: 50px; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        }
+        .icon-btn.off { background: #ef4444; border-color: #ef4444; }
+        .icon-btn:hover { background: var(--neon); color: #000; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Room Entry Section -->
+    <div id="lobby">
+        <div class="glass-card">
+            <h1>LEO CONNECT</h1>
+            <p style="opacity: 0.7;">3D Multi-User Video Hub</p>
+            <input type="text" id="nameInput" placeholder="Your Name">
+            <input type="text" id="roomInput" placeholder="Room ID (e.g. party123)">
+            <button class="btn-join" onclick="joinRoom()">START SESSION</button>
+        </div>
+    </div>
+    <!-- Call Section -->
+    <div id="call-room">
+        <div id="video-grid">
+            <!-- Local Video First -->
+            <div class="video-container" id="localContainer">
+                <video id="localVideo" autoplay playsinline muted></video>
+                <div class="user-label">You (Me)</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="icon-btn" id="mute-btn" onclick="toggleMute()">🎤</button>
+            <button class="icon-btn" id="cam-btn" onclick="toggleCam()">📷</button>
+            <button class="icon-btn off" onclick="location.reload()">🛑</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const videoGrid = document.getElementById('video-grid');
+        let myStream;
+        let peers = {};
+        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+        async function joinRoom() {
+            const name = document.getElementById('nameInput').value;
+            const room = document.getElementById('roomInput').value;
+            if(!name || !room) return alert("Fill details bhai!");
+
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('call-room').style.display = 'flex';
+
+            myStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = myStream;
+
+            socket.emit('join-room', room, socket.id);
+
+            socket.on('user-connected', (userId) => {
+                console.log("New user joined:", userId);
+                makeOffer(userId);
+            });
+
+            socket.on('signal', async (data) => {
+                handleSignaling(data);
+            });
+          socket.on('user-disconnected', (userId) => {
+                if(peers[userId]) {
+                    peers[userId].close();
+                    document.getElementById(userId)?.remove();
+                    delete peers[userId];
+                }
+            });
+        }
+
+        async function makeOffer(userId) {
+            const pc = new RTCPeerConnection(config);
+            peers[userId] = pc;
+
+            myStream.getTracks().forEach(track => pc.addTrack(track, myStream));
+
+            pc.onicecandidate = (e) => {
+                if(e.candidate) socket.emit('signal', { to: userId, signal: { candidate: e.candidate } });
+            };
+
+            pc.ontrack = (e) => {
+                addRemoteVideo(userId, e.streams[0]);
+            };
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('signal', { to: userId, signal: { sdp: offer } });
+        }
+
+        async function handleSignaling(data) {
+            const { from, signal } = data;
+            let pc = peers[from];
+
+            if(!pc) {
+                pc = new RTCPeerConnection(config);
+                peers[from] = pc;
+                myStream.getTracks().forEach(track => pc.addTrack(track, myStream));
+
+                pc.onicecandidate = (e) => {
+                    if(e.candidate) socket.emit('signal', { to: from, signal: { candidate: e.candidate } });
+                };
+
+                pc.ontrack = (e) => {
+                    addRemoteVideo(from, e.streams[0]);
+                };
+            }
+          if(signal.sdp) {
+                await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+                if(signal.sdp.type === 'offer') {
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('signal', { to: from, signal: { sdp: answer } });
+                }
+            } else if(signal.candidate) {
+                await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+            }
+        }
+
+        function addRemoteVideo(userId, stream) {
+            if(document.getElementById(userId)) return;
+            const container = document.createElement('div');
+            container.className = 'video-container';
+            container.id = userId;
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+            const label = document.createElement('div');
+            label.className = 'user-label';
+            label.innerText = "Remote Peer";
+            container.append(video, label);
+            videoGrid.appendChild(container);
+        }
+
+        function toggleMute() {
+            const enabled = myStream.getAudioTracks()[0].enabled;
+            myStream.getAudioTracks()[0].enabled = !enabled;
+            document.getElementById('mute-btn').classList.toggle('off', enabled);
+            document.getElementById('mute-btn').innerText = enabled ? '🔇' : '🎤';
+        }
+
+        function toggleCam() {
+            const enabled = myStream.getVideoTracks()[0].enabled;
+            myStream.getVideoTracks()[0].enabled = !enabled;
+            document.getElementById('cam-btn').classList.toggle('off', enabled);
+            document.getElementById('cam-btn').innerText = enabled ? '❌' : '📷';
+        }
+    </script>
+</body>
+</html>
