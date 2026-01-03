@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>FUN 2</title>
+    <title>FUN 2 - STABLE HUB</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { 
             --neon: #ffc400; /* Yellow Neon */
             --dark: #010409; 
-            --border: #374151; /* Darker border for clean look */
+            --panel: #0a192f;
+            --border: #374151;
             --main-glow: 0 0 10px rgba(255, 196, 0, 0.5);
             --red: #ff4444;
         }
@@ -23,36 +24,35 @@
         .shiny-title { font-size: 1.6rem; font-weight: 900; text-align: center; background: linear-gradient(to right, var(--neon), #fff, var(--neon)); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 4s linear infinite; letter-spacing: 3px; margin-top: 15px; z-index: 10; }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* LOBBY UI */
+        /* LOBBY UI FIX */
         #lobby { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; z-index: 10; }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 35px; border-radius: 30px; text-align: center; width: 85%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
         input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; color: var(--neon); outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); } /* Focus Glow Fix */
+        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); } /* Input Focus Fix */
         .btn-join { width: 100%; padding: 16px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 50px; font-weight: 800; cursor: pointer; box-shadow: var(--main-glow); transition: 0.3s; }
 
-        /* ADAPTIVE FLEXBOX GRID */
+        /* ADAPTIVE FLEXBOX GRID - SIMPLE & STABLE */
         #call-room { display: none; width: 100%; height: 100%; padding: 10px; flex-direction: column; align-items: center; z-index: 5; }
         #video-grid { 
-            display: flex; flex-wrap: wrap; 
+            display: flex; flex-wrap: wrap; /* Flexible wrap for multiple users */
             justify-content: center; align-content: center;
             width: 100%; 
             height: calc(100vh - 100px); /* CONTROLS KE JUST UPAR TAK FIX */
             gap: 10px; 
-            margin-top: 5px;
             transition: all 0.4s ease;
+            margin-top: 5px;
         }
         
         .video-container { 
             position: relative; border-radius: 10px; overflow: hidden; 
             background: #111; border: 2px solid var(--border);
             box-shadow: 0 0 5px rgba(255, 196, 0, 0.1); transition: 0.4s ease;
-            flex-grow: 1; /* For equal distribution */
-            min-height: 45%; /* Minimum vertical size */
+            flex-grow: 1; /* Grow to fill space */
+            min-width: 45%; /* Minimum Ludo style width */
+            max-width: 100%; /* Default max width */
+            height: 100%; /* Default height for single user */
         }
         .video-container.main-user { border-color: var(--neon); box-shadow: var(--main-glow); }
-        .video-container.single { width: 100%; height: 100%; } /* Single user full screen */
-        .video-container.half { width: 100%; } /* Two users half screen */
-        .video-container.quarter { width: 48%; height: 48%; } /* Ludo style */
         
         video { width: 100%; height: 100%; object-fit: cover; }
         
@@ -109,43 +109,6 @@
         const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         let controlTimeout;
 
-        // --- GRID LOGIC FIX ---
-        function updateGridStyles() {
-            const count = videoGrid.children.length;
-            const grid = videoGrid.style;
-            
-            // Clear previous styles
-            grid.gridTemplateColumns = '';
-            grid.gridTemplateRows = '';
-            
-            if (count === 1) {
-                grid.justifyContent = 'center';
-                grid.alignContent = 'center';
-            } else {
-                grid.justifyContent = 'space-evenly';
-                grid.alignContent = 'space-evenly';
-            }
-
-            // Set main sizing classes
-            for(let i=0; i<videoGrid.children.length; i++) {
-                const item = videoGrid.children[i];
-                item.classList.remove('single', 'half', 'quarter');
-                
-                if (count === 1) {
-                    item.classList.add('single');
-                } else if (count === 2) {
-                    item.classList.add('half');
-                } else if (count === 3) {
-                    item.classList.add('quarter'); // 3 users ko 4 quarter mein divide kar dega
-                } else if (count >= 4) {
-                    item.classList.add('quarter');
-                }
-            }
-        }
-        
-        const resizeObserver = new ResizeObserver(updateGridStyles);
-        resizeObserver.observe(videoGrid);
-
         async function initCall() {
             myNickname = document.getElementById('nickname').value;
             myRoom = document.getElementById('roomid').value;
@@ -188,10 +151,9 @@
                 container.classList.add('main-user');
             }
 
-            container.innerHTML = `${controlsHTML}<video id="${id}Video" autoplay playsinline ${isLocal ? 'muted' : ''}></video><div class="name-tag">${name}</div>`;
+            container.innerHTML = `${controlsHTML}<video id="${id}Video" autoplay playsInline ${isLocal ? 'muted' : ''}></video><div class="name-tag">${name}</div>`;
             container.querySelector('video').srcObject = stream;
             videoGrid.appendChild(container);
-            updateGridStyles(); 
         }
 
         function toggleOrbControls(el) {
@@ -204,6 +166,7 @@
 
         async function switchCamera(mode) {
             if(myStream) myStream.getTracks().forEach(t => t.stop());
+            
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 const newVT = newStream.getVideoTracks()[0];
