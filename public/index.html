@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>FUN 2 - FLEX HUB</title>
+    <title>FUN 2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root { 
             --neon: #ffc400; /* Yellow Neon */
             --dark: #010409; 
-            --border: #374151; 
+            --border: #374151; /* Darker border for clean look */
             --main-glow: 0 0 10px rgba(255, 196, 0, 0.5);
             --red: #ff4444;
         }
@@ -25,9 +25,10 @@
 
         /* LOBBY UI */
         #lobby { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; z-index: 10; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 35px; border-radius: 30px; text-align: center; width: 85%; max-width: 360px; }
-        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); } 
-        .btn-join { background: var(--neon); box-shadow: var(--main-glow); }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); padding: 35px; border-radius: 30px; text-align: center; width: 85%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 12px; color: var(--neon); outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); } /* Focus Glow Fix */
+        .btn-join { width: 100%; padding: 16px; margin-top: 20px; background: var(--neon); color: #000; border: none; border-radius: 50px; font-weight: 800; cursor: pointer; box-shadow: var(--main-glow); transition: 0.3s; }
 
         /* ADAPTIVE FLEXBOX GRID */
         #call-room { display: none; width: 100%; height: 100%; padding: 10px; flex-direction: column; align-items: center; z-index: 5; }
@@ -35,8 +36,9 @@
             display: flex; flex-wrap: wrap; 
             justify-content: center; align-content: center;
             width: 100%; 
-            height: 85vh; /* CONTROLS KE JUST UPAR TAK */
+            height: calc(100vh - 100px); /* CONTROLS KE JUST UPAR TAK FIX */
             gap: 10px; 
+            margin-top: 5px;
             transition: all 0.4s ease;
         }
         
@@ -44,36 +46,34 @@
             position: relative; border-radius: 10px; overflow: hidden; 
             background: #111; border: 2px solid var(--border);
             box-shadow: 0 0 5px rgba(255, 196, 0, 0.1); transition: 0.4s ease;
-            /* Flexbox ka magic */
-            flex-grow: 1; 
-            min-width: 45%; /* Minimum size for the Ludo style */
-            max-height: 100%; 
+            flex-grow: 1; /* For equal distribution */
+            min-height: 45%; /* Minimum vertical size */
         }
         .video-container.main-user { border-color: var(--neon); box-shadow: var(--main-glow); }
+        .video-container.single { width: 100%; height: 100%; } /* Single user full screen */
+        .video-container.half { width: 100%; } /* Two users half screen */
+        .video-container.quarter { width: 48%; height: 48%; } /* Ludo style */
         
         video { width: 100%; height: 100%; object-fit: cover; }
         
         /* FLOATING CONTROLS */
+        .vid-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
         .vid-controls.show { opacity: 1; pointer-events: auto; }
-        .small-btn { background: rgba(0, 0, 0, 0.5); color: var(--neon); border: 1px solid var(--neon); }
-        .small-btn:active { background: var(--neon); color: var(--dark); border-color: var(--neon); } 
+        .small-btn { background: rgba(0, 0, 0, 0.5); color: var(--neon); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 5px; font-size: 0.6rem; font-weight: bold; cursor: pointer; transition: 0.1s; }
+        .small-btn:active { background: var(--neon); color: var(--dark); border-color: var(--neon); } /* Click Feedback Fix */
 
         .name-tag { position: absolute; bottom: 8px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 2px 10px; border-radius: 10px; font-size: 0.65rem; border: 1px solid var(--neon); color: #fff; z-index: 10; }
 
-        .controls { 
+        .bottom-controls { 
             position: fixed; bottom: 15px; display: flex; gap: 15px; 
             background: rgba(10, 25, 47, 0.8); padding: 10px 20px; border-radius: 40px;
             backdrop-filter: blur(15px); border: 1px solid var(--neon); 
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
         .btn-orb { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-orb:active { transform: scale(0.9); border-color: var(--neon); }
         .btn-orb.red { background: rgba(239, 68, 68, 0.15); border-color: var(--red); color: var(--red); }
-        
-        /* Specific Fixes */
-        .vid-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
-        .vid-controls.show { opacity: 1; pointer-events: auto; }
 
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -95,7 +95,7 @@
             <!-- Videos go here -->
         </div>
 
-        <div class="controls">
+        <div class="bottom-controls">
             <button class="btn-orb" id="micBtn" onclick="toggleMic()">🎤</button>
             <button class="btn-orb" onclick="location.reload()">📞</button>
             <button class="btn-orb red" onclick="dismissAll()" title="End Session">🚫</button>
@@ -108,6 +108,43 @@
         let myStream, pcList = {}, myNickname, myRoom;
         const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         let controlTimeout;
+
+        // --- GRID LOGIC FIX ---
+        function updateGridStyles() {
+            const count = videoGrid.children.length;
+            const grid = videoGrid.style;
+            
+            // Clear previous styles
+            grid.gridTemplateColumns = '';
+            grid.gridTemplateRows = '';
+            
+            if (count === 1) {
+                grid.justifyContent = 'center';
+                grid.alignContent = 'center';
+            } else {
+                grid.justifyContent = 'space-evenly';
+                grid.alignContent = 'space-evenly';
+            }
+
+            // Set main sizing classes
+            for(let i=0; i<videoGrid.children.length; i++) {
+                const item = videoGrid.children[i];
+                item.classList.remove('single', 'half', 'quarter');
+                
+                if (count === 1) {
+                    item.classList.add('single');
+                } else if (count === 2) {
+                    item.classList.add('half');
+                } else if (count === 3) {
+                    item.classList.add('quarter'); // 3 users ko 4 quarter mein divide kar dega
+                } else if (count >= 4) {
+                    item.classList.add('quarter');
+                }
+            }
+        }
+        
+        const resizeObserver = new ResizeObserver(updateGridStyles);
+        resizeObserver.observe(videoGrid);
 
         async function initCall() {
             myNickname = document.getElementById('nickname').value;
@@ -154,6 +191,7 @@
             container.innerHTML = `${controlsHTML}<video id="${id}Video" autoplay playsinline ${isLocal ? 'muted' : ''}></video><div class="name-tag">${name}</div>`;
             container.querySelector('video').srcObject = stream;
             videoGrid.appendChild(container);
+            updateGridStyles(); 
         }
 
         function toggleOrbControls(el) {
@@ -166,7 +204,6 @@
 
         async function switchCamera(mode) {
             if(myStream) myStream.getTracks().forEach(t => t.stop());
-            
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 const newVT = newStream.getVideoTracks()[0];
