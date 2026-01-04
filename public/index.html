@@ -3,157 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VID CALL - PREMIUM</title>
-
+    <title>VID CALL - PRO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-
     <script src="/socket.io/socket.io.js"></script>
-
     <style>
         :root {
-            /* इमेज के हिसाब से कलर्स */
             --bg-gradient: linear-gradient(135deg, #7000ff 0%, #001220 50%, #00d4ff 100%);
             --neon-blue: #00f2ff;
             --glass-bg: rgba(255, 255, 255, 0.08);
             --glass-border: rgba(255, 255, 255, 0.15);
             --text-color: #ffffff;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        html, body {
-            height: 100%; width: 100%; overflow: hidden;
-            background: var(--bg-gradient);
-            color: var(--text-color);
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* बैकग्राउंड में तैरते हुए गोले (Floating Spheres) */
-        body::before, body::after {
-            content: ''; position: absolute; border-radius: 50%; z-index: -1; filter: blur(40px); opacity: 0.6;
-        }
-        body::before { width: 300px; height: 300px; background: #bd00ff; top: 10%; left: 10%; animation: float 10s infinite alternate; }
-        body::after { width: 250px; height: 250px; background: #00d4ff; bottom: 10%; right: 10%; animation: float 8s infinite alternate-reverse; }
-
-        @keyframes float { from { transform: translate(0,0); } to { transform: translate(50px, 100px); } }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg-gradient); color: var(--text-color); font-family: 'Poppins', sans-serif; }
+        body::before, body::after { content: ''; position: absolute; border-radius: 50%; z-index: -1; filter: blur(60px); opacity: 0.5; }
+        body::before { width: 300px; height: 300px; background: #bd00ff; top: 10%; left: 5%; animation: float 12s infinite alternate; }
+        body::after { width: 250px; height: 250px; background: #00d4ff; bottom: 10%; right: 5%; animation: float 10s infinite alternate-reverse; }
+        @keyframes float { from { transform: translate(0,0); } to { transform: translate(40px, 80px); } }
         body { display: flex; flex-direction: column; padding: 15px; position: relative; }
-
-        .shiny-title {
-            font-size: 2.2rem; font-weight: 700; text-align: center;
-            background: linear-gradient(to right, #fff, var(--neon-blue));
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-            letter-spacing: 3px; flex-shrink: 0; padding-bottom: 10px;
-        }
-
-        #lobby { display: flex; align-items: center; justify-content: center; flex-grow: 1; width: 100%; }
-
-        /* प्रीमियम ग्लास कार्ड डिज़ाइन */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            padding: 40px; border-radius: 30px;
-            text-align: center; width: 90%; max-width: 420px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        }
-
-        .input-group { position: relative; margin-bottom: 20px; }
-        .input-group input {
-            width: 100%; padding: 15px 15px 15px 45px; background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px; color: #fff; outline: none;
-        }
+        .shiny-title { font-size: 2rem; font-weight: 700; text-align: center; background: linear-gradient(to right, #fff, var(--neon-blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 15px rgba(0, 242, 255, 0.3); letter-spacing: 2px; flex-shrink: 0; padding-bottom: 10px; }
+        #lobby { display: flex; align-items: center; justify-content: center; flex-grow: 1; width: 100%; transition: 0.4s; }
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 25px; text-align: center; width: 95%; max-width: 400px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group input { width: 100%; padding: 14px 14px 14px 45px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; font-size: 0.9rem; }
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--neon-blue); }
-
-        .btn-join {
-            width: 100%; padding: 15px; margin-top: 15px; 
-            background: linear-gradient(90deg, #7000ff, #00d4ff);
-            color: #fff; border: none; border-radius: 15px; font-weight: bold; 
-            cursor: pointer; box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-            transition: 0.3s;
-        }
-        .btn-join:hover { transform: scale(1.02); filter: brightness(1.1); }
-
-        #call-room { display: none; flex-grow: 1; width: 100%; min-height: 0; padding-bottom: 100px; }
-        
-        #video-grid { width: 100%; height: 100%; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 12px; }
-        
-        /* वीडियो कंटेनर - Glowing Light Blue Border */
-        .video-container { 
-            position: relative; border-radius: 20px; overflow: hidden; 
-            background: rgba(0, 0, 0, 0.4); 
-            border: 1px solid var(--neon-blue); /* पतला ग्लोइंग बॉर्डर */
-            box-shadow: 0 0 10px rgba(0, 242, 255, 0.4); /* ग्लो इफ़ेक्ट */
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
-        }
+        .btn-join { width: 100%; padding: 14px; margin-top: 10px; background: linear-gradient(90deg, #7000ff, #00d4ff); color: #fff; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        .btn-join:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
+        #call-room { display: none; flex-grow: 1; width: 100%; min-height: 0; padding-bottom: 90px; }
+        #video-grid { width: 100%; height: 100%; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 10px; }
+        .video-container { position: relative; border-radius: 18px; overflow: hidden; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--neon-blue); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(5px); }
         video { width: 100%; height: 100%; object-fit: cover; }
-      
-        /* एनिमेटेड लेआउट क्लासेस */
-        .layout-1 .video-container { width: 100%; height: 100%; max-width: 800px; }
-        .layout-2 .video-container { width: 100%; height: calc(50% - 10px); max-width: 600px; }
-        .layout-3 .video-container:nth-child(1), .layout-3 .video-container:nth-child(2) { width: calc(50% - 10px); height: 50%; }
-        .layout-3 .video-container:nth-child(3) { width: 100%; height: calc(50% - 15px); }
-        .layout-4 .video-container { width: calc(50% - 10px); height: calc(50% - 10px); }
-
-        .vid-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10; opacity: 0; transition: 0.3s; }
+        .layout-1 .video-container { width: 100%; height: 100%; }
+        .layout-2 .video-container { width: 100%; height: calc(50% - 5px); }
+        .layout-3 .video-container:nth-child(1), .layout-3 .video-container:nth-child(2) { width: calc(50% - 5px); height: 50%; }
+        .layout-3 .video-container:nth-child(3) { width: 100%; height: calc(50% - 10px); }
+        .layout-4 .video-container { width: calc(50% - 5px); height: calc(50% - 5px); }
+        .vid-controls { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; z-index: 10; opacity: 0; transition: 0.3s; }
         .video-container:hover .vid-controls { opacity: 1; }
-        
-        .video-overlay-btn {
-            background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255,255,255,0.3);
-            padding: 6px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px);
-        }
-
-        .name-tag {
-            position: absolute; bottom: 12px; left: 12px; 
-            background: rgba(0, 0, 0, 0.5); padding: 5px 15px; border-radius: 12px; 
-            font-size: 0.75rem; border: 1px solid var(--neon-blue); backdrop-filter: blur(5px);
-        }
-
-        /* नीचे के कंट्रोल बटन्स */
-        .bottom-controls { 
-            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; background: rgba(255, 255, 255, 0.1); 
-            padding: 15px 35px; border-radius: 40px;
-            backdrop-filter: blur(20px); border: 1px solid var(--glass-border); 
-            z-index: 100; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        .main-icon-btn {
-            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); 
-            color: #fff; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; 
-            font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: 0.3s;
-        }
-        .main-icon-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 15px var(--neon-blue); }
-        .red-btn { background: rgba(239, 68, 68, 0.6) !important; }
-        .red-btn:hover { background: #ef4444 !important; box-shadow: 0 0 15px #ef4444; }
-
+        .video-overlay-btn { background: rgba(0, 0, 0, 0.6); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.65rem; font-weight: 600; cursor: pointer; backdrop-filter: blur(5px); }
+        .layout-3 .video-overlay-btn, .layout-4 .video-overlay-btn { font-size: 0.55rem; padding: 3px 8px; }
+        .name-tag { position: absolute; bottom: 8px; left: 8px; background: rgba(0, 0, 0, 0.5); padding: 4px 10px; border-radius: 10px; font-size: 0.7rem; border: 1px solid var(--neon-blue); backdrop-filter: blur(5px); }
+        .bottom-controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; background: rgba(255, 255, 255, 0.1); padding: 12px 25px; border-radius: 35px; backdrop-filter: blur(20px); border: 1px solid var(--glass-border); z-index: 100; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); }
+        .main-icon-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .main-icon-btn:hover { background: var(--neon-blue); color: #000; transform: scale(1.1); }
+        .red-btn { background: rgba(239, 68, 68, 0.5) !important; }
+        .red-btn:hover { background: #ef4444 !important; }
+        #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: var(--glass-bg); border: 1px solid var(--neon-blue); padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+        .modal-btns { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1; }
+        .confirm-btn { background: #ef4444; color: white; }
+        .cancel-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div class="shiny-title">VID CALL</div>
-
     <div id="lobby">
         <div class="glass-card">
-            <h2 style="margin-bottom: 20px;">Join Session</h2>
-            <div class="input-group">
-                <i class="fa-solid fa-user"></i>
-                <input type="text" id="nickname" placeholder="Your Name">
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-door-open"></i>
-                <input type="text" id="roomid" placeholder="Room ID">
-            </div>
+            <h2 style="margin-bottom: 20px; font-size: 1.3rem;">Join Session</h2>
+            <div class="input-group"><i class="fa-solid fa-user"></i><input type="text" id="nickname" placeholder="Your Name" autocomplete="off"></div>
+            <div class="input-group"><i class="fa-solid fa-door-open"></i><input type="text" id="roomid" placeholder="Room ID" autocomplete="off"></div>
             <button class="btn-join" onclick="initCall()"><i class="fa-solid fa-video"></i> JOIN SESSION</button>
         </div>
     </div>
-
     <div id="call-room">
         <div id="video-grid">
             <div class="video-container" id="local-video-container">
@@ -167,53 +83,53 @@
             </div>
         </div>
     </div>
-
     <div class="bottom-controls hidden" id="controls-bar">
         <button class="main-icon-btn red-btn" onclick="location.reload()" title="Leave Call"><i class="fa-solid fa-phone-slash"></i></button>
-        <button class="main-icon-btn red-btn" style="background: rgba(185, 28, 28, 0.6) !important;" onclick="dismissAll()" title="End for All"><i class="fa-solid fa-power-off"></i></button>
+        <button class="main-icon-btn red-btn" style="background: rgba(185, 28, 28, 0.5) !important;" onclick="askDismiss()" title="End for All"><i class="fa-solid fa-power-off"></i></button>
     </div>
-
+    <div id="custom-modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 10px;">End Room?</h3>
+            <p style="font-size: 0.85rem; opacity: 0.8;">This will end the call for everyone.</p>
+            <div class="modal-btns">
+                <button class="modal-btn cancel-btn" onclick="closeModal()">NO</button>
+                <button class="modal-btn confirm-btn" id="confirmDismiss">YES</button>
+            </div>
+        </div>
+    </div>
     <script>
         const socket = io();
         let myStream, pcList = {}, myNickname, myRoom;
         const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
         async function initCall() {
             myNickname = document.getElementById('nickname').value;
             myRoom = document.getElementById('roomid').value;
-            if(!myNickname || !myRoom) return alert("Fill details!");
-
+            if(!myNickname || !myRoom) return;
             document.getElementById('lobby').classList.add('hidden');
             document.getElementById('call-room').style.display = 'block';
             document.getElementById('controls-bar').classList.remove('hidden');
             document.getElementById('myTag').innerText = myNickname + " (Me)";
-
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
                 document.getElementById('localVideo').srcObject = myStream;
                 updateVideoLayout();
-            } catch(e) {
-                alert("Could not access camera/mic."); location.reload(); return;
-            }
-            
+            } catch(e) { location.reload(); return; }
             socket.emit('join-room', { roomId: myRoom, nickname: myNickname });
-            socket.on('room-full', () => { alert("Sorry, this room is full."); location.reload(); });
+            socket.on('room-full', () => { location.reload(); });
             socket.on('user-joined', (data) => sendOffer(data.id));
             socket.on('signal', (data) => handleSignal(data));
-            socket.on('room-dismissed', () => { alert("Meeting ended."); location.reload(); });
+            socket.on('room-dismissed', () => { location.reload(); });
             socket.on('user-left', (id) => {
                 if(pcList[id]) { pcList[id].close(); delete pcList[id]; }
-                document.getElementById(id)?.remove();
+                const el = document.getElementById(id); if(el) el.remove();
                 updateVideoLayout();
             });
         }
-
         function updateVideoLayout() {
             const grid = document.getElementById('video-grid');
             const count = grid.getElementsByClassName('video-container').length;
             grid.className = `layout-${count}`;
         }
-        
         async function switchCamera(mode) {
             const isMuted = !myStream.getAudioTracks()[0].enabled;
             myStream.getTracks().forEach(track => track.stop());
@@ -227,17 +143,15 @@
                     if (vSender) await vSender.replaceTrack(newVT); if (aSender) await aSender.replaceTrack(newAT);
                 }
                 newStream.getAudioTracks()[0].enabled = !isMuted; myStream = newStream;
-            } catch (err) { alert("Conflict: Camera source is busy."); location.reload(); }
+            } catch (err) { location.reload(); }
         }
-
         function toggleMic() {
-            const audioTrack = myStream.getAudioTracks()[0];
-            const micBtn = document.getElementById('localMicBtn');
-            audioTrack.enabled = !audioTrack.enabled;
-            micBtn.innerText = audioTrack.enabled ? "MIC ON" : "MIC OFF";
-            audioTrack.enabled ? micBtn.style.background = "" : micBtn.style.background = "#ef4444";
+            const track = myStream.getAudioTracks()[0];
+            const btn = document.getElementById('localMicBtn');
+            track.enabled = !track.enabled;
+            btn.innerText = track.enabled ? "MIC ON" : "MIC OFF";
+            btn.style.background = track.enabled ? "rgba(0, 0, 0, 0.6)" : "#ef4444";
         }
-
         function createPC(toId) {
             const pc = new RTCPeerConnection(config);
             pcList[toId] = pc;
@@ -246,14 +160,12 @@
             pc.ontrack = (e) => showRemoteVideo(toId, e.streams[0]);
             return pc;
         }
-
         async function sendOffer(toId) {
             const pc = createPC(toId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             socket.emit("signal", { to: toId, signal: { sdp: offer }, nickname: myNickname });
         }
-
         async function handleSignal(data) {
             let pc = pcList[data.from] || createPC(data.from);
             if (data.signal.sdp) {
@@ -265,7 +177,6 @@
                 if (data.nickname) updateNameTag(data.from, data.nickname);
             } else if (data.signal.candidate) { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); }
         }
-
         function showRemoteVideo(id, stream) {
             if (document.getElementById(id)) return;
             const div = document.createElement('div'); div.className = 'video-container'; div.id = id;
@@ -274,13 +185,19 @@
             div.append(v, tag); document.getElementById('video-grid').appendChild(div);
             updateVideoLayout();
         }
-
         function updateNameTag(id, name) {
             const container = document.getElementById(id);
             if (container) { const tag = container.querySelector('.name-tag'); if (tag) tag.innerText = name; }
         }
-
-        function dismissAll() { if (confirm("End room for everyone?")) socket.emit("dismiss-room", myRoom); }
+        function askDismiss() {
+            const modal = document.getElementById('custom-modal');
+            modal.style.display = 'flex';
+            document.getElementById('confirmDismiss').onclick = function() {
+                socket.emit("dismiss-room", myRoom);
+                modal.style.display = 'none';
+            };
+        }
+        function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
     </script>
 </body>
 </html>
