@@ -7,7 +7,7 @@
 
     <!-- गूगल फ़ॉन्ट्स और फॉन्ट ऑसम आइकन्स -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
@@ -78,14 +78,9 @@
             display: none; width: 100%; padding: 15px; flex-direction: column; align-items: center;
         }
 
-        /* --- आपका ओरिजिनल वर्किंग ग्रिड --- */
         #video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            width: 100%;
-            max-width: 1200px; /* आप इसे अपनी पसंद के अनुसार बदल सकते हैं */
-            margin-bottom: 100px; /* नीचे के कंट्रोल्स के लिए जगह */
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px; width: 100%; max-width: 1200px; margin-bottom: 100px;
         }
         
         .video-container { 
@@ -95,15 +90,23 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
       
+        /* --- नए, छोटे और लो-विजिबल बटन्स --- */
         .vid-controls { 
             position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10;
+            opacity: 0; /* शुरू में छिपे हुए */
+            transition: opacity 0.3s ease-in-out;
         }
-        .small-btn { 
-            background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--neon); 
-            width: 40px; height: 40px; border-radius: 50%; font-size: 1rem;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        .video-container:hover .vid-controls {
+            opacity: 1; /* होवर करने पर दिखेंगे */
         }
-        .small-btn.muted { background: var(--red); }
+        .video-overlay-btn {
+            background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 12px; border-radius: 20px; /* Eclipse Shape */
+            font-size: 0.7rem; font-weight: 600; cursor: pointer;
+            backdrop-filter: blur(5px); transition: background-color 0.2s;
+        }
+        .video-overlay-btn:hover { background-color: rgba(0,0,0,0.8); }
+        .video-overlay-btn.muted { background-color: var(--red); }
 
         .name-tag {
             position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6);
@@ -152,11 +155,9 @@
             <!-- LOCAL USER BOX -->
             <div class="video-container">
                 <div class="vid-controls">
-                    <button class="small-btn" onclick="switchCamera('user')" title="Front Camera"><i class="fa-solid fa-camera-rotate"></i></button>
-                    <button class="small-btn" onclick="switchCamera('environment')" title="Back Camera"><i class="fa-solid fa-mobile-screen-button"></i></button>
-                    <button class="small-btn" id="localMicBtn" onclick="toggleMic()" title="Toggle Mic">
-                        <i class="fa-solid fa-microphone"></i>
-                    </button>
+                    <button class="video-overlay-btn" onclick="switchCamera('user')">FRONT</button>
+                    <button class="video-overlay-btn" onclick="switchCamera('environment')">BACK</button>
+                    <button class="video-overlay-btn" id="localMicBtn" onclick="toggleMic()">MIC ON</button>
                 </div>
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="name-tag" id="myTag">You</div>
@@ -169,7 +170,7 @@
         </div>
     </div>
 
-    <!-- ======== JAVASCRIPT LOGIC (आपका ओरिजिनल लॉजिक) ======== -->
+    <!-- ======== JAVASCRIPT LOGIC ======== -->
     <script>
         const socket = io();
         let myStream, pcList = {}, myNickname, myRoom;
@@ -199,8 +200,7 @@
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 document.getElementById('localVideo').srcObject = newStream;
-                const newVT = newStream.getVideoTracks()[0];
-                const newAT = newStream.getAudioTracks()[0];
+                const newVT = newStream.getVideoTracks()[0]; const newAT = newStream.getAudioTracks()[0];
                 for(let id in pcList) {
                     const senders = pcList[id].getSenders();
                     const vSender = senders.find(s => s.track && s.track.kind === 'video');
@@ -219,14 +219,13 @@
         function toggleMic() {
             const audioTrack = myStream.getAudioTracks()[0];
             const micBtn = document.getElementById('localMicBtn');
-            const icon = micBtn.querySelector('i');
             audioTrack.enabled = !audioTrack.enabled;
             
-            if(audioTrack.enabled) {
-                icon.className = 'fa-solid fa-microphone';
+            if (audioTrack.enabled) {
+                micBtn.innerText = 'MIC ON';
                 micBtn.classList.remove('muted');
             } else {
-                icon.className = 'fa-solid fa-microphone-slash';
+                micBtn.innerText = 'MIC OFF';
                 micBtn.classList.add('muted');
             }
         }
