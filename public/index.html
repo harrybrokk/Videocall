@@ -50,13 +50,12 @@
             text-align: center; width: 90%; max-width: 420px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .glass-card h2 { margin-bottom: 30px; font-weight: 600; }
         .input-group { position: relative; margin-bottom: 20px; }
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
         .input-group input {
             width: 100%; padding: 15px 15px 15px 45px; background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--light-blue); border-radius: 12px; color: var(--text-primary);
-            font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 1rem; outline: none;
         }
         .btn-join {
             width: 100%; padding: 15px; margin-top: 15px; background: linear-gradient(45deg, var(--neon), #00b8d4);
@@ -64,9 +63,11 @@
             font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
+        /* --- Overlap Problem Fixed Here --- */
         #call-room {
             display: none; flex-grow: 1;
             width: 100%; min-height: 0;
+            padding-bottom: 90px; /* नीचे के बटन्स के लिए खाली जगह */
         }
         
         #video-grid {
@@ -79,7 +80,8 @@
         .video-container { 
             position: relative; border-radius: 15px; overflow: hidden; 
             background: #111; border: 2px solid var(--light-blue);
-            transition: all 0.5s ease;
+            /* --- Smooth Animation Fixed Here --- */
+            transition: width 0.35s ease-in-out, height 0.35s ease-in-out;
         }
         video { width: 100%; height: 100%; object-fit: cover; }
       
@@ -92,7 +94,7 @@
             background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2);
             padding: 5px 12px; border-radius: 20px;
             font-size: 0.7rem; font-weight: 600; cursor: pointer;
-            backdrop-filter: blur(5px); transition: background-color 0.2s;
+            backdrop-filter: blur(5px);
         }
         .video-overlay-btn.muted { background-color: var(--red); }
 
@@ -192,7 +194,7 @@
             });
         }
 
-        // --- यह फंक्शन मोबाइल स्क्रीन पर स्क्रॉलिंग को रोकता है ---
+        // --- Smooth Animation Logic Here ---
         function updateVideoLayout() {
             const grid = document.getElementById('video-grid');
             const containers = grid.querySelectorAll('.video-container');
@@ -201,16 +203,14 @@
             if (count === 0) return;
 
             if (count === 1) {
-                containers.forEach(c => {
-                    c.style.width = '100%';
-                    c.style.height = '100%';
-                });
+                containers[0].style.width = '100%';
+                containers[0].style.height = '100%';
             } else if (count === 2) {
                 containers.forEach(c => {
                     c.style.width = '100%';
-                    c.style.height = 'calc(50% - 5px)'; // 5px is half the gap
+                    c.style.height = 'calc(50% - 5px)';
                 });
-            } else if (count >= 3) { // 3 और 4 लोगों के लिए
+            } else if (count >= 3) {
                 containers.forEach(c => {
                     c.style.width = 'calc(50% - 5px)';
                     c.style.height = 'calc(50% - 5px)';
@@ -218,7 +218,7 @@
             }
         }
         
-        window.addEventListener('resize', updateVideoLayout); // स्क्रीन का साइज़ बदलने पर लेआउट को दोबारा एडजस्ट करें
+        window.addEventListener('resize', updateVideoLayout);
 
         async function switchCamera(mode) {
             const isMuted = !myStream.getAudioTracks()[0].enabled;
@@ -290,7 +290,7 @@
             const tag = document.createElement('div'); tag.className = 'name-tag'; tag.innerText = "Guest";
             div.append(v, tag);
             document.getElementById('video-grid').appendChild(div);
-            updateVideoLayout(); // नया यूजर जुड़ते ही लेआउट को अपडेट करें
+            updateVideoLayout();
         }
 
         function updateNameTag(id, name) {
