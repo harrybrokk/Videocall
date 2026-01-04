@@ -17,19 +17,16 @@
         :root {
             --neon: #00e5ff; --dark-blue: #0f172a; --light-blue: #1e293b;
             --glass: rgba(255, 255, 255, 0.05); --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8; --red: #ef4444; --dark-red: #b91c1c;
+            --red: #ef4444; --dark-red: #b91c1c;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        html { height: -webkit-fill-available; }
-        body {
+        html, body {
+            height: 100%; width: 100%; overflow: hidden;
             background-color: var(--dark-blue); color: var(--text-primary);
             font-family: 'Poppins', sans-serif;
-            display: flex; flex-direction: column;
-            height: 100vh; height: -webkit-fill-available; /* iOS Fix */
-            padding: 15px; overflow: hidden;
         }
+        body { display: flex; flex-direction: column; padding: 15px; }
 
         .shiny-title {
             font-size: 2.2rem; font-weight: 700; text-align: center;
@@ -42,49 +39,52 @@
 
         #lobby {
             display: flex; align-items: center; justify-content: center;
-            flex-grow: 1; width: 100%; transition: opacity 0.5s ease, transform 0.5s ease;
+            flex-grow: 1; width: 100%;
         }
         .glass-card {
             background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 20px;
             text-align: center; width: 90%; max-width: 420px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
         .input-group { position: relative; margin-bottom: 20px; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); }
         .input-group input {
             width: 100%; padding: 15px 15px 15px 45px; background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--light-blue); border-radius: 12px; color: var(--text-primary);
-            font-size: 1rem; outline: none;
         }
         .btn-join {
             width: 100%; padding: 15px; margin-top: 15px; background: linear-gradient(45deg, var(--neon), #00b8d4);
             color: #000; border: none; border-radius: 12px; font-weight: bold; cursor: pointer;
-            font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
-        /* --- Overlap Problem Fixed Here --- */
         #call-room {
-            display: none; flex-grow: 1;
-            width: 100%; min-height: 0;
-            padding-bottom: 90px; /* नीचे के बटन्स के लिए खाली जगह */
+            display: none; flex-grow: 1; width: 100%; min-height: 0;
+            padding-bottom: 90px;
         }
         
         #video-grid {
             width: 100%; height: 100%;
             display: flex; flex-wrap: wrap;
-            align-items: center; align-content: center;
+            align-content: stretch; /* This helps align items properly */
             justify-content: center; gap: 10px;
         }
         
         .video-container { 
-            position: relative; border-radius: 15px; overflow: hidden; 
-            background: #111; border: 2px solid var(--light-blue);
-            /* --- Smooth Animation Fixed Here --- */
-            transition: width 0.35s ease-in-out, height 0.35s ease-in-out;
+            position: relative; border-radius: 15px; overflow: hidden; background: #111;
+            border: 2px solid var(--light-blue);
+            transition: width 0.4s ease-in-out, height 0.4s ease-in-out; /* Main animation transition */
         }
         video { width: 100%; height: 100%; object-fit: cover; }
       
+        /* --- Animation Logic using Classes --- */
+        .layout-1 .video-container { width: 100%; height: 100%; }
+        .layout-2 .video-container { width: 100%; height: calc(50% - 5px); }
+        .layout-3 .video-container:nth-child(1),
+        .layout-3 .video-container:nth-child(2) { width: calc(50% - 5px); height: 50%; }
+        .layout-3 .video-container:nth-child(3) { width: 100%; height: calc(50% - 10px); }
+        .layout-4 .video-container { width: calc(50% - 5px); height: calc(50% - 5px); }
+
         .vid-controls { 
             position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10;
             opacity: 0; transition: opacity 0.3s ease-in-out;
@@ -92,73 +92,35 @@
         .video-container:hover .vid-controls { opacity: 1; }
         .video-overlay-btn {
             background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2);
-            padding: 5px 12px; border-radius: 20px;
-            font-size: 0.7rem; font-weight: 600; cursor: pointer;
-            backdrop-filter: blur(5px);
+            padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
         }
-        .video-overlay-btn.muted { background-color: var(--red); }
-
+        .video-overlay-btn.muted { background-color: #ef4444; }
         .name-tag {
             position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6);
-            padding: 4px 12px; border-radius: 8px; font-size: 0.75rem;
-            border: 1px solid var(--neon);
+            padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; border: 1px solid var(--neon);
         }
 
         .bottom-controls { 
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 15px; 
-            background: rgba(0,0,0,0.7); padding: 12px 25px; border-radius: 40px;
-            backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
+            display: flex; gap: 15px; background: rgba(0,0,0,0.7); padding: 12px 25px;
+            border-radius: 40px; backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
         }
         .main-icon-btn {
             background: var(--glass); border: none; color: #fff; width: 50px; height: 50px;
             border-radius: 50%; cursor: pointer; font-size: 1.2rem;
             display: flex; align-items: center; justify-content: center;
         }
-        .main-icon-btn.red-btn { background-color: var(--red); }
-        .main-icon-btn.dark-red-btn { background-color: var(--dark-red); }
         
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-
     <div class="shiny-title">VID CALL</div>
-    <div id="lobby">
-        <div class="glass-card">
-            <h2>Start a Session</h2>
-            <div class="input-group">
-                <i class="fa-solid fa-user"></i>
-                <input type="text" id="nickname" placeholder="Your Name">
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-door-open"></i>
-                <input type="text" id="roomid" placeholder="Room ID">
-            </div>
-            <button class="btn-join" onclick="initCall()"><i class="fa-solid fa-video"></i> JOIN SESSION</button>
-        </div>
-    </div>
+    <div id="lobby"><div class="glass-card"><h2>Start a Session</h2><div class="input-group"><i class="fa-solid fa-user"></i><input type="text" id="nickname" placeholder="Your Name"></div><div class="input-group"><i class="fa-solid fa-door-open"></i><input type="text" id="roomid" placeholder="Room ID"></div><button class="btn-join" onclick="initCall()"><i class="fa-solid fa-video"></i> JOIN SESSION</button></div></div>
+    <div id="call-room"><div id="video-grid"><div class="video-container" id="local-video-container"><div class="vid-controls"><button class="video-overlay-btn" onclick="switchCamera('user')">FRONT</button><button class="video-overlay-btn" onclick="switchCamera('environment')">BACK</button><button class="video-overlay-btn" id="localMicBtn" onclick="toggleMic()">MIC ON</button></div><video id="localVideo" autoplay playsinline muted></video><div class="name-tag" id="myTag">You</div></div></div></div>
+    <div class="bottom-controls hidden" id="controls-bar"><button class="main-icon-btn" style="background: #ef4444;" onclick="location.reload()" title="Leave Call"><i class="fa-solid fa-phone-slash"></i></button><button class="main-icon-btn" style="background:#b91c1c;" onclick="dismissAll()" title="End for All"><i class="fa-solid fa-power-off"></i></button></div>
 
-    <div id="call-room">
-        <div id="video-grid">
-            <div class="video-container" id="local-video-container">
-                <div class="vid-controls">
-                    <button class="video-overlay-btn" onclick="switchCamera('user')">FRONT</button>
-                    <button class="video-overlay-btn" onclick="switchCamera('environment')">BACK</button>
-                    <button class="video-overlay-btn" id="localMicBtn" onclick="toggleMic()">MIC ON</button>
-                </div>
-                <video id="localVideo" autoplay playsinline muted></video>
-                <div class="name-tag" id="myTag">You</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-controls hidden" id="controls-bar">
-        <button class="main-icon-btn red-btn" onclick="location.reload()" title="Leave Call"><i class="fa-solid fa-phone-slash"></i></button>
-        <button class="main-icon-btn dark-red-btn" onclick="dismissAll()" title="End for All"><i class="fa-solid fa-power-off"></i></button>
-    </div>
-
-    <!-- ======== JAVASCRIPT LOGIC ======== -->
+    <!-- ======== FULL JAVASCRIPT LOGIC ======== -->
     <script>
         const socket = io();
         let myStream, pcList = {}, myNickname, myRoom;
@@ -179,11 +141,15 @@
                 document.getElementById('localVideo').srcObject = myStream;
                 updateVideoLayout();
             } catch(e) {
-                alert("Could not access camera or microphone. Please allow permissions.");
-                location.reload(); return;
+                alert("Could not access camera/mic."); location.reload(); return;
             }
             
             socket.emit('join-room', { roomId: myRoom, nickname: myNickname });
+            
+            socket.on('room-full', () => {
+                alert("Sorry, this room is full.");
+                location.reload();
+            });
             socket.on('user-joined', (data) => sendOffer(data.id));
             socket.on('signal', (data) => handleSignal(data));
             socket.on('room-dismissed', () => { alert("Meeting ended."); location.reload(); });
@@ -194,48 +160,30 @@
             });
         }
 
-        // --- Smooth Animation Logic Here ---
         function updateVideoLayout() {
             const grid = document.getElementById('video-grid');
-            const containers = grid.querySelectorAll('.video-container');
-            const count = containers.length;
-            
-            if (count === 0) return;
-
-            if (count === 1) {
-                containers[0].style.width = '100%';
-                containers[0].style.height = '100%';
-            } else if (count === 2) {
-                containers.forEach(c => {
-                    c.style.width = '100%';
-                    c.style.height = 'calc(50% - 5px)';
-                });
-            } else if (count >= 3) {
-                containers.forEach(c => {
-                    c.style.width = 'calc(50% - 5px)';
-                    c.style.height = 'calc(50% - 5px)';
-                });
-            }
+            const count = grid.getElementsByClassName('video-container').length;
+            grid.className = `layout-${count}`;
         }
         
-        window.addEventListener('resize', updateVideoLayout);
-
         async function switchCamera(mode) {
             const isMuted = !myStream.getAudioTracks()[0].enabled;
             myStream.getTracks().forEach(track => track.stop());
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 document.getElementById('localVideo').srcObject = newStream;
-                const newVT = newStream.getVideoTracks()[0]; const newAT = newStream.getAudioTracks()[0];
-                for(let id in pcList) {
+                const newVT = newStream.getVideoTracks()[0];
+                const newAT = newStream.getAudioTracks()[0];
+                for (let id in pcList) {
                     const senders = pcList[id].getSenders();
                     const vSender = senders.find(s => s.track && s.track.kind === 'video');
                     const aSender = senders.find(s => s.track && s.track.kind === 'audio');
-                    if(vSender) await vSender.replaceTrack(newVT); if(aSender) await aSender.replaceTrack(newAT);
+                    if (vSender) await vSender.replaceTrack(newVT);
+                    if (aSender) await aSender.replaceTrack(newAT);
                 }
                 newStream.getAudioTracks()[0].enabled = !isMuted;
                 myStream = newStream;
-              } catch (err) {
+            } catch (err) {
                 alert("Conflict: Camera source is busy.");
                 location.reload();
             }
@@ -245,18 +193,15 @@
             const audioTrack = myStream.getAudioTracks()[0];
             const micBtn = document.getElementById('localMicBtn');
             audioTrack.enabled = !audioTrack.enabled;
-            if (audioTrack.enabled) {
-                micBtn.innerText = 'MIC ON'; micBtn.classList.remove('muted');
-            } else {
-                micBtn.innerText = 'MIC OFF'; micBtn.classList.add('muted');
-            }
+            micBtn.innerText = audioTrack.enabled ? "MIC ON" : "MIC OFF";
+            audioTrack.enabled ? micBtn.classList.remove("muted") : micBtn.classList.add("muted");
         }
 
         function createPC(toId) {
             const pc = new RTCPeerConnection(config);
             pcList[toId] = pc;
             myStream.getTracks().forEach(track => pc.addTrack(track, myStream));
-            pc.onicecandidate = (e) => { if(e.candidate) socket.emit('signal', { to: toId, signal: { candidate: e.candidate } }); };
+            pc.onicecandidate = (e) => { if (e.candidate) socket.emit("signal", { to: toId, signal: { candidate: e.candidate } }); };
             pc.ontrack = (e) => showRemoteVideo(toId, e.streams[0]);
             return pc;
         }
@@ -265,29 +210,36 @@
             const pc = createPC(toId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            socket.emit('signal', { to: toId, signal: { sdp: offer }, nickname: myNickname });
+            socket.emit("signal", { to: toId, signal: { sdp: offer }, nickname: myNickname });
         }
 
         async function handleSignal(data) {
             let pc = pcList[data.from] || createPC(data.from);
-            if(data.signal.sdp) {
+            if (data.signal.sdp) {
                 await pc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
-                if(data.signal.sdp.type === 'offer') {
+                if (data.signal.sdp.type === 'offer') {
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
-                    socket.emit('signal', { to: data.from, signal: { sdp: answer }, nickname: myNickname });
+                    socket.emit("signal", { to: data.from, signal: { sdp: answer }, nickname: myNickname });
                 }
-                if(data.nickname) updateNameTag(data.from, data.nickname);
-            } else if(data.signal.candidate) {
+                if (data.nickname) updateNameTag(data.from, data.nickname);
+            } else if (data.signal.candidate) {
                 await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
             }
         }
 
-      function showRemoteVideo(id, stream) {
-            if(document.getElementById(id)) return;
-            const div = document.createElement('div'); div.className = 'video-container'; div.id = id;
-            const v = document.createElement('video'); v.srcObject = stream; v.autoplay = true; v.playsInline = true;
-            const tag = document.createElement('div'); tag.className = 'name-tag'; tag.innerText = "Guest";
+        function showRemoteVideo(id, stream) {
+            if (document.getElementById(id)) return;
+            const div = document.createElement('div');
+            div.className = 'video-container';
+            div.id = id;
+            const v = document.createElement('video');
+            v.srcObject = stream;
+            v.autoplay = true;
+            v.playsInline = true;
+            const tag = document.createElement('div');
+            tag.className = 'name-tag';
+            tag.innerText = "Guest";
             div.append(v, tag);
             document.getElementById('video-grid').appendChild(div);
             updateVideoLayout();
@@ -295,10 +247,15 @@
 
         function updateNameTag(id, name) {
             const container = document.getElementById(id);
-            if(container) { const tag = container.querySelector('.name-tag'); if(tag) tag.innerText = name; }
+            if (container) {
+                const tag = container.querySelector('.name-tag');
+                if (tag) tag.innerText = name;
+            }
         }
 
-        function dismissAll() { if(confirm("End room?")) socket.emit('dismiss-room', myRoom); }
+        function dismissAll() {
+            if (confirm("End room?")) socket.emit("dismiss-room", myRoom);
+        }
     </script>
 </body>
 </html>
