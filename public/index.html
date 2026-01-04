@@ -10,13 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #7000ff 0%, #001220 50%, #00d4ff 100%);
-            --neon-blue: #00f2ff;
-            --glass-bg: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --text-color: #ffffff;
-        }
+        :root { --bg-gradient: linear-gradient(135deg, #7000ff 0%, #001220 50%, #00d4ff 100%); --neon-blue: #00f2ff; --glass-bg: rgba(255, 255, 255, 0.08); --glass-border: rgba(255, 255, 255, 0.15); --text-color: #ffffff; }
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg-gradient); color: var(--text-color); font-family: 'Poppins', sans-serif; }
         body::before, body::after { content: ''; position: absolute; border-radius: 50%; z-index: -1; filter: blur(60px); opacity: 0.5; }
@@ -25,7 +19,7 @@
         @keyframes float { from { transform: translate(0,0); } to { transform: translate(40px, 80px); } }
         body { display: flex; flex-direction: column; padding: 15px; position: relative; }
         .shiny-title { font-size: 2rem; font-weight: 700; text-align: center; background: linear-gradient(to right, #fff, var(--neon-blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 15px rgba(0, 242, 255, 0.3); letter-spacing: 2px; flex-shrink: 0; padding-bottom: 10px; }
-        #lobby { display: flex; align-items: center; justify-content: center; flex-grow: 1; width: 100%; transition: 0.4s; }
+        #lobby { display: flex; align-items: center; justify-content: center; flex-grow: 1; width: 100%; }
         .glass-card { background: var(--glass-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border); padding: 30px; border-radius: 25px; text-align: center; width: 95%; max-width: 400px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
         .input-group { position: relative; margin-bottom: 15px; }
         .input-group input { width: 100%; padding: 14px 14px 14px 45px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #fff; font-size: 0.9rem; }
@@ -34,12 +28,9 @@
         .btn-join:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
         #call-room { display: none; flex-grow: 1; width: 100%; min-height: 0; padding-bottom: 90px; }
         #video-grid { width: 100%; height: 100%; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 10px; }
-        .video-container { position: relative; border-radius: 18px; overflow: hidden; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--neon-blue); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(5px); }
+        .video-container { position: relative; border-radius: 18px; overflow: hidden; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--neon-blue); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); transition: all 0.4s ease; backdrop-filter: blur(5px); }
         video { width: 100%; height: 100%; object-fit: cover; }
-        
-        
-        #localVideo { transform: scaleX(-1); -webkit-transform: scaleX(-1); }
-
+        #localVideo { transform: scaleX(-1); }
         .layout-1 .video-container { width: 100%; height: 100%; }
         .layout-2 .video-container { width: 100%; height: calc(50% - 5px); }
         .layout-3 .video-container:nth-child(1), .layout-3 .video-container:nth-child(2) { width: calc(50% - 5px); height: 50%; }
@@ -54,13 +45,12 @@
         .main-icon-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .main-icon-btn:hover { background: var(--neon-blue); color: #000; transform: scale(1.1); }
         .red-btn { background: rgba(239, 68, 68, 0.5) !important; }
-        .red-btn:hover { background: #ef4444 !important; }
         #custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--glass-bg); border: 1px solid var(--neon-blue); padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+        .modal-content { background: var(--glass-bg); border: 1px solid var(--neon-blue); padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; }
         .modal-btns { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1; }
-        .confirm-btn { background: #ef4444; color: white; }
-        .cancel-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .modal-btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; flex: 1; color: white; }
+        .confirm-btn { background: #ef4444; }
+        .cancel-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -88,8 +78,8 @@
         </div>
     </div>
     <div class="bottom-controls hidden" id="controls-bar">
-        <button class="main-icon-btn red-btn" onclick="location.reload()" title="Leave Call"><i class="fa-solid fa-phone-slash"></i></button>
-        <button class="main-icon-btn red-btn" style="background: rgba(185, 28, 28, 0.5) !important;" onclick="askDismiss()" title="End for All"><i class="fa-solid fa-power-off"></i></button>
+        <button class="main-icon-btn red-btn" onclick="location.reload()"><i class="fa-solid fa-phone-slash"></i></button>
+        <button class="main-icon-btn red-btn" style="background: rgba(185, 28, 28, 0.5) !important;" onclick="askDismiss()"><i class="fa-solid fa-power-off"></i></button>
     </div>
     <div id="custom-modal">
         <div class="modal-content">
@@ -147,14 +137,7 @@
                     if (vSender) await vSender.replaceTrack(newVT); if (aSender) await aSender.replaceTrack(newAT);
                 }
                 newStream.getAudioTracks()[0].enabled = !isMuted; myStream = newStream;
-                
-                
-                const vElem = document.getElementById('localVideo');
-                if(mode === 'user') {
-                    vElem.style.transform = "scaleX(-1)";
-                } else {
-                    vElem.style.transform = "scaleX(1)";
-                }
+                document.getElementById('localVideo').style.transform = mode === 'user' ? "scaleX(-1)" : "scaleX(1)";
             } catch (err) { location.reload(); }
         }
         function toggleMic() {
