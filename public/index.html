@@ -21,18 +21,21 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html { height: -webkit-fill-available; } /* iOS Safari height fix */
         body {
             background-color: var(--dark-blue); color: var(--text-primary);
             font-family: 'Poppins', sans-serif; display: flex; flex-direction: column;
-            align-items: center; min-height: 100vh; padding: 20px;
+            min-height: 100vh;
+            min-height: -webkit-fill-available; /* iOS Safari height fix */
+            padding: 15px; overflow: hidden;
         }
 
         .shiny-title {
-            font-size: 2.5rem; font-weight: 700; text-align: center;
+            font-size: 2.2rem; font-weight: 700; text-align: center;
             background: linear-gradient(to right, var(--neon) 20%, #fff 40%, #fff 60%, var(--neon) 80%);
             background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent; animation: shine 4s linear infinite;
-            letter-spacing: 2px; margin-bottom: 40px;
+            letter-spacing: 2px; margin-bottom: 15px; flex-shrink: 0;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
@@ -64,14 +67,18 @@
         .btn-join:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 229, 255, 0.2); }
         
         #call-room {
-            display: none; width: 100%; height: calc(100vh - 100px); /* Adjust height for title */
-            flex-direction: column; align-items: center; justify-content: center;
+            display: none;
+            flex-grow: 1; /* यह मुख्य बदलाव है, यह बची हुई जगह को भर देगा */
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
         
         #video-grid {
             width: 100%; height: 100%; display: flex;
-            flex-wrap: wrap; align-items: center; justify-content: center;
-            gap: 10px; padding: 10px;
+            flex-wrap: wrap; align-items: center; align-content: center;
+            justify-content: center; gap: 10px;
+            /* नीचे के कंट्रोल्स के लिए यहाँ जगह नहीं देंगे, क्योंकि parent अब सही साइज़ का है */
         }
         
         .video-container {
@@ -81,7 +88,6 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- नए कैमरा कंट्रोल्स --- */
         .vid-controls {
             position: absolute; top: 15px; right: 15px; display: flex;
             gap: 10px; z-index: 10; opacity: 0; transition: opacity 0.3s;
@@ -94,7 +100,6 @@
         }
         .cam-btn:hover { background-color: var(--neon); color: #000; }
 
-        /* --- वीडियो के अंदर माइक बटन --- */
         #local-mic-btn {
             position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 229, 255, 0.2); border: 1px solid var(--neon);
@@ -111,7 +116,8 @@
         }
         
         .bottom-controls {
-            position: fixed; bottom: 20px; display: flex; gap: 20px;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px;
             background: rgba(15, 23, 42, 0.8); padding: 15px 30px; border-radius: 50px;
             backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
             box-shadow: 0 0 25px rgba(0, 229, 255, 0.3); transition: transform 0.5s ease;
@@ -184,9 +190,8 @@
             myRoom = document.getElementById('roomid').value;
             if(!myNickname || !myRoom) return alert("Please fill in all details!");
 
-            document.body.style.overflow = "hidden"; // Prevent scrolling in call
             document.getElementById('lobby').classList.add('hidden');
-            document.getElementById('call-room').style.display = 'flex';
+            document.getElementById('call-room').style.display = 'block'; // Change to block or flex
             document.getElementById('controls-bar').classList.remove('hidden');
             document.getElementById('myTag').innerText = myNickname + " (Me)";
 
@@ -211,37 +216,57 @@
             });
         }
         
-        // --- नया डायनामिक लेआउट फंक्शन ---
         function updateVideoLayout() {
             const grid = document.getElementById('video-grid');
             const containers = grid.querySelectorAll('.video-container');
             const count = containers.length;
-            
-            if (count === 1) {
-                containers[0].style.width = '100%';
-                containers[0].style.height = '100%';
-            } else if (count === 2) {
+            const aspectRatio = 16 / 9;
+
+            if (count === 0) return;
+
+            // Simple vertical stack for 2 users, grid for more
+            if (count === 2) {
                 containers.forEach(c => {
                     c.style.width = '100%';
-                    c.style.height = '50%';
+                    c.style.height = 'calc(50% - 5px)';
                 });
-            } else if (count > 2 && count <= 4) {
+            } else {
+                // General grid layout
+                const gridHeight = grid.offsetHeight;
+                const gridWidth = grid.offsetWidth;
+                
+                let bestLayout = { rows: count, cols: 1, area: 0 };
+
+                // Find the layout that maximizes video area
+                for (let r = 1; r <= count; r++) {
+                    let c = Math.ceil(count / r);
+                    let videoWidth = gridWidth / c;
+                    let videoHeight = videoWidth / aspectRatio;
+                    if (videoHeight * r > gridHeight) {
+                        videoHeight = gridHeight / r;
+                        videoWidth = videoHeight * aspectRatio;
+                    }
+                    let area = videoWidth * videoHeight;
+                    if (area > bestLayout.area) {
+                        bestLayout = { rows: r, cols: c, area: area };
+                    }
+                }
+                
+                const videoWidth = (gridWidth / bestLayout.cols) - 10;
+                const videoHeight = videoWidth / aspectRatio;
+
                 containers.forEach(c => {
-                    c.style.width = '50%';
-                    c.style.height = '50%';
-                });
-            } else if (count > 4 && count <= 6) {
-                 containers.forEach(c => {
-                    c.style.width = 'calc(100% / 3)';
-                    c.style.height = '50%';
-                });
-            } else { // 6 से ज़्यादा यूजर के लिए
-                 containers.forEach(c => {
-                    c.style.width = '25%';
-                    c.style.height = 'calc(100% / 3)';
+                    c.style.width = `${videoWidth}px`;
+                    c.style.height = `${videoHeight}px`;
                 });
             }
         }
+
+        // Add a resize observer to re-calculate layout on screen size change
+        const resizeObserver = new ResizeObserver(() => {
+            updateVideoLayout();
+        });
+        resizeObserver.observe(document.getElementById('video-grid'));
 
         async function switchCamera(mode) {
             if (!myStream) return;
@@ -323,7 +348,7 @@
             const tag = document.createElement('div');
             tag.className = 'name-tag'; tag.innerText = "Guest";
             div.append(v, tag); grid.appendChild(div);
-            updateVideoLayout(); // लेआउट को अपडेट करें
+            updateVideoLayout();
         }
 
         function updateNameTag(id, name) {
