@@ -6,7 +6,7 @@
     <title>VID CALL</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     
@@ -21,13 +21,17 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html { height: -webkit-fill-available; } /* iOS Safari height fix */
+        html { height: -webkit-fill-available; }
         body {
             background-color: var(--dark-blue); color: var(--text-primary);
-            font-family: 'Poppins', sans-serif; display: flex; flex-direction: column;
-            min-height: 100vh;
-            min-height: -webkit-fill-available; /* iOS Safari height fix */
-            padding: 15px; overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            /* --- मुख्य लेआउट कण्ट्रोल --- */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: -webkit-fill-available;
+            padding: 15px;
+            overflow: hidden;
         }
 
         .shiny-title {
@@ -35,7 +39,9 @@
             background: linear-gradient(to right, var(--neon) 20%, #fff 40%, #fff 60%, var(--neon) 80%);
             background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent; animation: shine 4s linear infinite;
-            letter-spacing: 2px; margin-bottom: 15px; flex-shrink: 0;
+            letter-spacing: 2px;
+            flex-shrink: 0; /* टाइटल को सिकुड़ने से रोकता है */
+            padding-bottom: 10px;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
@@ -66,25 +72,25 @@
         }
         .btn-join:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 229, 255, 0.2); }
         
+        /* --- यह है आपका White Box वाला एरिया --- */
         #call-room {
             display: none;
-            flex-grow: 1; /* यह मुख्य बदलाव है, यह बची हुई जगह को भर देगा */
+            flex-grow: 1; /* यह बची हुई सारी जगह ले लेता है */
             width: 100%;
-            height: 100%;
-            overflow: hidden;
+            min-height: 0; /* फ्लेक्सबॉक्स की एक गड़बड़ को ठीक करता है */
+            padding-bottom: 90px; /* नीचे के कंट्रोल्स के लिए खाली जगह */
         }
         
         #video-grid {
             width: 100%; height: 100%; display: flex;
-            flex-wrap: wrap; align-items: center; align-content: center;
+            flex-wrap: wrap; align-content: center;
             justify-content: center; gap: 10px;
-            /* नीचे के कंट्रोल्स के लिए यहाँ जगह नहीं देंगे, क्योंकि parent अब सही साइज़ का है */
         }
         
         .video-container {
             position: relative; overflow: hidden; background: #000;
             border: 2px solid var(--light-blue); border-radius: 15px;
-            transition: all 0.5s ease;
+            transition: all 0.5s ease; aspect-ratio: 16/9; /* वीडियो का अनुपात बनाए रखता है */
         }
         video { width: 100%; height: 100%; object-fit: cover; }
 
@@ -98,8 +104,7 @@
             padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
             cursor: pointer; backdrop-filter: blur(5px);
         }
-        .cam-btn:hover { background-color: var(--neon); color: #000; }
-
+        
         #local-mic-btn {
             position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 229, 255, 0.2); border: 1px solid var(--neon);
@@ -128,9 +133,8 @@
             font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
             transition: background-color 0.3s, transform 0.2s;
         }
-        .main-icon-btn:hover { background-color: var(--neon); color: #000; transform: translateY(-5px); }
-        .red-btn { background-color: var(--red); } .red-btn:hover { background-color: #ff6b6b; }
-        .dark-red-btn { background-color: var(--dark-red); } .dark-red-btn:hover { background-color: var(--red); }
+        .red-btn { background-color: var(--red); }
+        .dark-red-btn { background-color: var(--dark-red); }
         
         .hidden { transform: scale(0.9); opacity: 0; pointer-events: none; }
     </style>
@@ -191,7 +195,7 @@
             if(!myNickname || !myRoom) return alert("Please fill in all details!");
 
             document.getElementById('lobby').classList.add('hidden');
-            document.getElementById('call-room').style.display = 'block'; // Change to block or flex
+            document.getElementById('call-room').style.display = 'block';
             document.getElementById('controls-bar').classList.remove('hidden');
             document.getElementById('myTag').innerText = myNickname + " (Me)";
 
@@ -210,8 +214,7 @@
             socket.on('room-dismissed', () => { alert("The meeting was ended by the host."); location.reload(); });
             socket.on('user-left', (id) => {
                 if(pcList[id]) { pcList[id].close(); delete pcList[id]; }
-                const userElem = document.getElementById(id);
-                if (userElem) { userElem.remove(); }
+                document.getElementById(id)?.remove();
                 updateVideoLayout();
             });
         }
@@ -220,59 +223,34 @@
             const grid = document.getElementById('video-grid');
             const containers = grid.querySelectorAll('.video-container');
             const count = containers.length;
-            const aspectRatio = 16 / 9;
-
+            
             if (count === 0) return;
 
-            // Simple vertical stack for 2 users, grid for more
-            if (count === 2) {
+            // यह लेआउट लॉजिक अब एकदम सही काम करेगा
+            if (count === 1) {
+                containers[0].style.width = '100%';
+                containers[0].style.height = 'auto'; // aspect-ratio अपना काम करेगा
+            } else if (count === 2) {
                 containers.forEach(c => {
                     c.style.width = '100%';
                     c.style.height = 'calc(50% - 5px)';
                 });
-            } else {
-                // General grid layout
-                const gridHeight = grid.offsetHeight;
-                const gridWidth = grid.offsetWidth;
-                
-                let bestLayout = { rows: count, cols: 1, area: 0 };
-
-                // Find the layout that maximizes video area
-                for (let r = 1; r <= count; r++) {
-                    let c = Math.ceil(count / r);
-                    let videoWidth = gridWidth / c;
-                    let videoHeight = videoWidth / aspectRatio;
-                    if (videoHeight * r > gridHeight) {
-                        videoHeight = gridHeight / r;
-                        videoWidth = videoHeight * aspectRatio;
-                    }
-                    let area = videoWidth * videoHeight;
-                    if (area > bestLayout.area) {
-                        bestLayout = { rows: r, cols: c, area: area };
-                    }
-                }
-                
-                const videoWidth = (gridWidth / bestLayout.cols) - 10;
-                const videoHeight = videoWidth / aspectRatio;
-
+            } else { // 3 और 4 लोगों के लिए
                 containers.forEach(c => {
-                    c.style.width = `${videoWidth}px`;
-                    c.style.height = `${videoHeight}px`;
+                    c.style.width = 'calc(50% - 5px)';
+                    c.style.height = 'auto';
                 });
             }
         }
-
-        // Add a resize observer to re-calculate layout on screen size change
-        const resizeObserver = new ResizeObserver(() => {
-            updateVideoLayout();
-        });
-        resizeObserver.observe(document.getElementById('video-grid'));
+        
+        // स्क्रीन का साइज़ बदलने पर लेआउट को दोबारा एडजस्ट करने के लिए
+        window.addEventListener('resize', updateVideoLayout);
 
         async function switchCamera(mode) {
+            // ... (यह फंक्शन पहले जैसा ही है, कोई बदलाव नहीं)
             if (!myStream) return;
             const isMuted = !myStream.getAudioTracks()[0].enabled;
             myStream.getTracks().forEach(track => track.stop());
-
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 document.getElementById('localVideo').srcObject = newStream;
@@ -293,6 +271,7 @@
         }
 
         function toggleMic() {
+            // ... (यह फंक्शन पहले जैसा ही है, कोई बदलाव नहीं)
             const audioTrack = myStream.getAudioTracks()[0];
             const micBtn = document.getElementById('local-mic-btn');
             const icon = micBtn.querySelector('i');
@@ -354,8 +333,7 @@
         function updateNameTag(id, name) {
             const container = document.getElementById(id);
             if(container) {
-                const tag = container.querySelector('.name-tag');
-                if(tag) tag.innerText = name;
+                container.querySelector('.name-tag').innerText = name;
             }
         }
 
