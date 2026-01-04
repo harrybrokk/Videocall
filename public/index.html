@@ -112,7 +112,6 @@
             socket.on('user-joined', (data) => sendOffer(data.id));
             socket.on('signal', (data) => handleSignal(data));
             socket.on('room-dismissed', () => { location.reload(); });
-            
             socket.on('user-left', (id) => { 
                 if(pcList[id]) { pcList[id].close(); delete pcList[id]; }
                 const el = document.getElementById(id); if(el) el.remove();
