@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VID CALL</title>
-    
+
+    <!-- गूगल फ़ॉन्ट्स और फॉन्ट ऑसम आइकन्स -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-    
+
     <script src="/socket.io/socket.io.js"></script>
 
     <!-- ======== STYLES (CSS) ======== -->
@@ -19,36 +20,36 @@
             --glass: rgba(255, 255, 255, 0.05); --text-primary: #f1f5f9;
             --text-secondary: #94a3b8; --red: #ef4444; --dark-red: #b91c1c;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html { height: -webkit-fill-available; }
         body {
-            background-color: var(--dark-blue); color: var(--text-primary);
+            background-color: var(--dark-blue);
+            color: var(--text-primary);
             font-family: 'Poppins', sans-serif;
-            /* --- मुख्य लेआउट कण्ट्रोल --- */
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            height: -webkit-fill-available;
-            padding: 15px;
-            overflow: hidden;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .shiny-title {
-            font-size: 2.2rem; font-weight: 700; text-align: center;
+            font-size: 2.5rem; font-weight: 700; text-align: center;
             background: linear-gradient(to right, var(--neon) 20%, #fff 40%, #fff 60%, var(--neon) 80%);
-            background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+            background-size: 200% auto;
+            -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent; animation: shine 4s linear infinite;
-            letter-spacing: 2px;
-            flex-shrink: 0; /* टाइटल को सिकुड़ने से रोकता है */
-            padding-bottom: 10px;
+            letter-spacing: 2px; margin-bottom: 20px;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
+        /* --- नया लॉबी स्क्रीन का स्टाइल --- */
         #lobby {
             display: flex; align-items: center; justify-content: center;
             flex-grow: 1; width: 100%; transition: opacity 0.5s ease, transform 0.5s ease;
         }
+
         .glass-card {
             background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 20px;
@@ -71,72 +72,60 @@
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
         .btn-join:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 229, 255, 0.2); }
-        
-        /* --- यह है आपका White Box वाला एरिया --- */
+
+        /* --- वीडियो कॉल रूम का स्टाइल --- */
         #call-room {
-            display: none;
-            flex-grow: 1; /* यह बची हुई सारी जगह ले लेता है */
-            width: 100%;
-            min-height: 0; /* फ्लेक्सबॉक्स की एक गड़बड़ को ठीक करता है */
-            padding-bottom: 90px; /* नीचे के कंट्रोल्स के लिए खाली जगह */
+            display: none; width: 100%; padding: 15px; flex-direction: column; align-items: center;
         }
-        
+
+        /* --- आपका ओरिजिनल वर्किंग ग्रिड --- */
         #video-grid {
-            width: 100%; height: 100%; display: flex;
-            flex-wrap: wrap; align-content: center;
-            justify-content: center; gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 1200px; /* आप इसे अपनी पसंद के अनुसार बदल सकते हैं */
+            margin-bottom: 100px; /* नीचे के कंट्रोल्स के लिए जगह */
         }
         
-        .video-container {
-            position: relative; overflow: hidden; background: #000;
-            border: 2px solid var(--light-blue); border-radius: 15px;
-            transition: all 0.5s ease; aspect-ratio: 16/9; /* वीडियो का अनुपात बनाए रखता है */
+        .video-container { 
+            position: relative; border-radius: 20px; overflow: hidden; 
+            background: #111; border: 1px solid var(--glass); aspect-ratio: 16/9;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         }
         video { width: 100%; height: 100%; object-fit: cover; }
+      
+        .vid-controls { 
+            position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10;
+        }
+        .small-btn { 
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--neon); 
+            width: 40px; height: 40px; border-radius: 50%; font-size: 1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .small-btn.muted { background: var(--red); }
 
-        .vid-controls {
-            position: absolute; top: 15px; right: 15px; display: flex;
-            gap: 10px; z-index: 10; opacity: 0; transition: opacity 0.3s;
-        }
-        .video-container:hover .vid-controls { opacity: 1; }
-        .cam-btn {
-            background: rgba(0, 0, 0, 0.7); color: white; border: 1px solid var(--neon);
-            padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-            cursor: pointer; backdrop-filter: blur(5px);
-        }
-        
-        #local-mic-btn {
-            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 229, 255, 0.2); border: 1px solid var(--neon);
-            color: #fff; width: 50px; height: 50px; border-radius: 50%; cursor: pointer;
-            font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px); z-index: 10; transition: background-color 0.3s;
-        }
-        #local-mic-btn.muted { background-color: var(--red); }
-        
         .name-tag {
-            position: absolute; bottom: 15px; left: 15px; background: rgba(0, 0, 0, 0.6);
-            padding: 5px 12px; border-radius: 8px; font-size: 0.8rem;
-            border: 1px solid var(--neon); backdrop-filter: blur(5px); z-index: 9;
+            position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6);
+            padding: 4px 12px; border-radius: 8px; font-size: 0.75rem;
+            border: 1px solid var(--neon);
         }
-        
-        .bottom-controls {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px;
-            background: rgba(15, 23, 42, 0.8); padding: 15px 30px; border-radius: 50px;
+
+        .bottom-controls { 
+            position: fixed; bottom: 20px; display: flex; gap: 15px; 
+            background: rgba(0,0,0,0.7); padding: 12px 25px; border-radius: 40px;
             backdrop-filter: blur(10px); border: 1px solid var(--neon); z-index: 100;
-            box-shadow: 0 0 25px rgba(0, 229, 255, 0.3); transition: transform 0.5s ease;
         }
         .main-icon-btn {
-            background: var(--glass); border: 1px solid var(--light-blue); color: #fff;
-            width: 55px; height: 55px; border-radius: 50%; cursor: pointer;
-            font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
-            transition: background-color 0.3s, transform 0.2s;
+            background: var(--glass); border: none; color: #fff; width: 50px; height: 50px;
+            border-radius: 50%; cursor: pointer; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center; transition: background-color 0.3s;
         }
-        .red-btn { background-color: var(--red); }
-        .dark-red-btn { background-color: var(--dark-red); }
+        .main-icon-btn.red-btn { background-color: var(--red); }
+        .main-icon-btn.dark-red-btn { background-color: var(--dark-red); }
+        .main-icon-btn:hover { background-color: var(--light-blue); }
         
-        .hidden { transform: scale(0.9); opacity: 0; pointer-events: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -160,30 +149,27 @@
 
     <div id="call-room">
         <div id="video-grid">
-            <div class="video-container" id="local-video-container">
+            <!-- LOCAL USER BOX -->
+            <div class="video-container">
                 <div class="vid-controls">
-                    <button class="cam-btn" onclick="switchCamera('user')">FRONT</button>
-                    <button class="cam-btn" onclick="switchCamera('environment')">BACK</button>
+                    <button class="small-btn" onclick="switchCamera('user')" title="Front Camera"><i class="fa-solid fa-camera-rotate"></i></button>
+                    <button class="small-btn" onclick="switchCamera('environment')" title="Back Camera"><i class="fa-solid fa-mobile-screen-button"></i></button>
+                    <button class="small-btn" id="localMicBtn" onclick="toggleMic()" title="Toggle Mic">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
                 </div>
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="name-tag" id="myTag">You</div>
-                <button id="local-mic-btn" onclick="toggleMic()" title="Toggle Mic">
-                    <i class="fa-solid fa-microphone"></i>
-                </button>
             </div>
         </div>
-    </div>
-    
-    <div class="bottom-controls hidden" id="controls-bar">
-        <button class="main-icon-btn red-btn" onclick="location.reload()" title="Leave Call">
-            <i class="fa-solid fa-phone-slash"></i>
-        </button>
-        <button class="main-icon-btn dark-red-btn" onclick="dismissAll()" title="End for All">
-            <i class="fa-solid fa-power-off"></i>
-        </button>
+
+        <div class="bottom-controls">
+            <button class="main-icon-btn red-btn" onclick="location.reload()" title="Leave Call"><i class="fa-solid fa-phone-slash"></i></button>
+            <button class="main-icon-btn dark-red-btn" onclick="dismissAll()" title="End for All"><i class="fa-solid fa-power-off"></i></button>
+        </div>
     </div>
 
-    <!-- ======== JAVASCRIPT LOGIC ======== -->
+    <!-- ======== JAVASCRIPT LOGIC (आपका ओरिजिनल लॉजिक) ======== -->
     <script>
         const socket = io();
         let myStream, pcList = {}, myNickname, myRoom;
@@ -192,69 +178,29 @@
         async function initCall() {
             myNickname = document.getElementById('nickname').value;
             myRoom = document.getElementById('roomid').value;
-            if(!myNickname || !myRoom) return alert("Please fill in all details!");
+            if(!myNickname || !myRoom) return alert("Fill details!");
 
             document.getElementById('lobby').classList.add('hidden');
-            document.getElementById('call-room').style.display = 'block';
-            document.getElementById('controls-bar').classList.remove('hidden');
+            document.getElementById('call-room').style.display = 'flex';
             document.getElementById('myTag').innerText = myNickname + " (Me)";
 
-            try {
-                myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-                document.getElementById('localVideo').srcObject = myStream;
-                updateVideoLayout();
-            } catch(e) {
-                alert("Could not access camera or microphone. Please allow permissions and try again.");
-                location.reload(); return;
-            }
-            
+            myStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+            document.getElementById('localVideo').srcObject = myStream;
             socket.emit('join-room', { roomId: myRoom, nickname: myNickname });
             socket.on('user-joined', (data) => sendOffer(data.id));
             socket.on('signal', (data) => handleSignal(data));
-            socket.on('room-dismissed', () => { alert("The meeting was ended by the host."); location.reload(); });
-            socket.on('user-left', (id) => {
-                if(pcList[id]) { pcList[id].close(); delete pcList[id]; }
-                document.getElementById(id)?.remove();
-                updateVideoLayout();
-            });
+            socket.on('room-dismissed', () => { alert("Meeting ended."); location.reload(); });
+            socket.on('user-left', (id) => { if(pcList[id]) { pcList[id].close(); document.getElementById(id)?.remove(); delete pcList[id]; } });
         }
         
-        function updateVideoLayout() {
-            const grid = document.getElementById('video-grid');
-            const containers = grid.querySelectorAll('.video-container');
-            const count = containers.length;
-            
-            if (count === 0) return;
-
-            // यह लेआउट लॉजिक अब एकदम सही काम करेगा
-            if (count === 1) {
-                containers[0].style.width = '100%';
-                containers[0].style.height = 'auto'; // aspect-ratio अपना काम करेगा
-            } else if (count === 2) {
-                containers.forEach(c => {
-                    c.style.width = '100%';
-                    c.style.height = 'calc(50% - 5px)';
-                });
-            } else { // 3 और 4 लोगों के लिए
-                containers.forEach(c => {
-                    c.style.width = 'calc(50% - 5px)';
-                    c.style.height = 'auto';
-                });
-            }
-        }
-        
-        // स्क्रीन का साइज़ बदलने पर लेआउट को दोबारा एडजस्ट करने के लिए
-        window.addEventListener('resize', updateVideoLayout);
-
         async function switchCamera(mode) {
-            // ... (यह फंक्शन पहले जैसा ही है, कोई बदलाव नहीं)
-            if (!myStream) return;
             const isMuted = !myStream.getAudioTracks()[0].enabled;
             myStream.getTracks().forEach(track => track.stop());
             try {
                 const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 document.getElementById('localVideo').srcObject = newStream;
-                const newVT = newStream.getVideoTracks()[0], newAT = newStream.getAudioTracks()[0];
+                const newVT = newStream.getVideoTracks()[0];
+                const newAT = newStream.getAudioTracks()[0];
                 for(let id in pcList) {
                     const senders = pcList[id].getSenders();
                     const vSender = senders.find(s => s.track && s.track.kind === 'video');
@@ -264,19 +210,18 @@
                 }
                 newStream.getAudioTracks()[0].enabled = !isMuted;
                 myStream = newStream;
-            } catch (err) {
-                alert("Could not switch camera. It might be in use or not available.");
+              } catch (err) {
+                alert("Conflict: Camera source is busy. Please try again in 2 seconds.");
                 location.reload();
             }
         }
 
         function toggleMic() {
-            // ... (यह फंक्शन पहले जैसा ही है, कोई बदलाव नहीं)
             const audioTrack = myStream.getAudioTracks()[0];
-            const micBtn = document.getElementById('local-mic-btn');
+            const micBtn = document.getElementById('localMicBtn');
             const icon = micBtn.querySelector('i');
             audioTrack.enabled = !audioTrack.enabled;
-
+            
             if(audioTrack.enabled) {
                 icon.className = 'fa-solid fa-microphone';
                 micBtn.classList.remove('muted');
@@ -316,32 +261,20 @@
                 await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
             }
         }
-      
-        function showRemoteVideo(id, stream) {
+      function showRemoteVideo(id, stream) {
             if(document.getElementById(id)) return;
-            const grid = document.getElementById('video-grid');
-            const div = document.createElement('div');
-            div.className = 'video-container'; div.id = id;
-            const v = document.createElement('video');
-            v.srcObject = stream; v.autoplay = true; v.playsInline = true;
-            const tag = document.createElement('div');
-            tag.className = 'name-tag'; tag.innerText = "Guest";
-            div.append(v, tag); grid.appendChild(div);
-            updateVideoLayout();
+            const div = document.createElement('div'); div.className = 'video-container'; div.id = id;
+            const v = document.createElement('video'); v.srcObject = stream; v.autoplay = true; v.playsInline = true;
+            const tag = document.createElement('div'); tag.className = 'name-tag'; tag.innerText = "Guest";
+            div.append(v, tag); document.getElementById('video-grid').appendChild(div);
         }
 
         function updateNameTag(id, name) {
             const container = document.getElementById(id);
-            if(container) {
-                container.querySelector('.name-tag').innerText = name;
-            }
+            if(container) { const tag = container.querySelector('.name-tag'); if(tag) tag.innerText = name; }
         }
 
-        function dismissAll() {
-            if(confirm("Are you sure you want to end this session for everyone?")) {
-                socket.emit('dismiss-room', myRoom);
-            }
-        }
+        function dismissAll() { if(confirm("End room?")) socket.emit('dismiss-room', myRoom); }
     </script>
 </body>
 </html>
