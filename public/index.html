@@ -90,11 +90,81 @@ body {
         linear-gradient(135deg, #05010d, #0a0220, #05010d);
     background-attachment: fixed;
 }
+/* === OUTER APP GLASS FRAME === */
+.app-frame{
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    margin: auto;
+
+    position: relative;
+    padding: 28px 18px 40px;
+
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+
+    border-radius: 38px;
+
+    border: 1px solid rgba(255,255,255,0.18);
+
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 60px rgba(255, 0, 255, 0.25),
+      0 0 80px rgba(0, 255, 255, 0.25);
+}
+/* === PREMIUM INPUT STYLE (IMAGE LIKE) === */
+input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 14px;
+    color: #fff;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.05),
+        0 0 12px rgba(0, 255, 255, 0.12);
+
+    transition: border 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* already working yellow focus — KEEP IT */
+input:focus{
+    border: 1px solid #facc15;
+    box-shadow:
+        0 0 10px rgba(250,204,21,0.9),
+        inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+/* === PREMIUM JOIN BUTTON (IMAGE STYLE) === */
+.btn-join{
+    background: linear-gradient(
+        135deg,
+        #ff4fd8,
+        #7c7cff,
+        #2eefff
+    );
+    color: #000;
+    font-weight: 700;
+    border-radius: 16px;
+    letter-spacing: 0.5px;
+
+    box-shadow:
+        0 0 12px rgba(255, 79, 216, 0.45),
+        0 0 20px rgba(46, 239, 255, 0.35);
+
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-join:active{
+    transform: scale(0.97);
+    box-shadow:
+        0 0 8px rgba(255, 79, 216, 0.35),
+        0 0 14px rgba(46, 239, 255, 0.25);
+}
 
     </style>
 </head>
 <body>
-
+<div class="app-frame">
     <div class="shiny-title">FUN2 CALL</div>
 
     <div id="lobby">
@@ -243,5 +313,6 @@ body {
 
         function dismissAll() { if(confirm("End room?")) socket.emit('dismiss-room', myRoom); }
     </script>
+    </div>
 </body>
 </html>
